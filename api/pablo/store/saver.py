@@ -1,0 +1,21 @@
+from core.store.saver import Saver as CoreSaver
+
+class Saver(CoreSaver):
+
+    pass
+    # async def create_image(self, transactionHash: str, registryAddress: str, fromAddress: str, toAddress: str, tokenId: int, value: int, gasLimit: int, gasPrice: int, gasUsed: int, blockNumber: int, blockHash: str, blockDate: datetime.datetime) -> TokenTransfer:
+    #     tokenTransferId = await self._execute(query=TokenTransfersTable.insert(), values={
+    #         TokenTransfersTable.c.transactionHash.key: transactionHash,
+    #         TokenTransfersTable.c.registryAddress.key: registryAddress,
+    #         TokenTransfersTable.c.fromAddress.key: fromAddress,
+    #         TokenTransfersTable.c.toAddress.key: toAddress,
+    #         TokenTransfersTable.c.tokenId.key: tokenId,
+    #         TokenTransfersTable.c.value.key: value,
+    #         TokenTransfersTable.c.gasLimit.key: gasLimit,
+    #         TokenTransfersTable.c.gasPrice.key: gasPrice,
+    #         TokenTransfersTable.c.gasUsed.key: gasUsed,
+    #         TokenTransfersTable.c.blockNumber.key: blockNumber,
+    #         TokenTransfersTable.c.blockHash.key: blockHash,
+    #         TokenTransfersTable.c.blockDate.key: blockDate,
+    #     })
+    #     return TokenTransfer(tokenTransferId=tokenTransferId, transactionHash=transactionHash, registryAddress=registryAddress, fromAddress=fromAddress, toAddress=toAddress, tokenId=tokenId, value=value, gasLimit=gasLimit, gasPrice=gasPrice, gasUsed=gasUsed, blockNumber=blockNumber, blockHash=blockHash, blockDate=blockDate)
