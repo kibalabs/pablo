@@ -22,7 +22,7 @@ from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 
 requestIdHolder = RequestIdHolder()
-name = os.environ.get('NAME', 'mdtp-api')
+name = os.environ.get('NAME', 'pablo-api')
 version = os.environ.get('VERSION', 'local')
 environment = os.environ.get('ENV', 'dev')
 isRunningDebugMode = environment == 'dev'
@@ -37,7 +37,7 @@ database = Database(connectionString=databaseConnectionString)
 saver = Saver(database=database)
 retriever = Retriever(database=database)
 
-workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'], queueUrl='https://sqs.eu-west-1.amazonaws.com/097520841056/mdtp-work-queue')
+workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'], queueUrl='https://sqs.eu-west-1.amazonaws.com/097520841056/pablo-work-queue')
 s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
 requester = Requester()
