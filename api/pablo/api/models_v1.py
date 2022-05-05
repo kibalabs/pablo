@@ -1,7 +1,5 @@
-from typing import Dict
 from typing import List
 
-from core.s3_manager import S3PresignedUpload
 from pydantic import BaseModel
 
 from pablo.internal.model import Image

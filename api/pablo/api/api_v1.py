@@ -2,8 +2,8 @@ from typing import Optional
 
 from fastapi import APIRouter
 from starlette.responses import Response
+from pablo.api.models_v1 import ApiImage, ApiImageVariant, GetImageResponse, GetImageVariantResponse, ListImageVariantsResponse, UploadImageUrlRequest, UploadImageUrlResponse
 
-from pablo.api.models_v1 import *
 from pablo.internal.pablo_manager import PabloManager
 
 
@@ -31,7 +31,7 @@ def create_api(manager: PabloManager) -> APIRouter():
         return GetImageVariantResponse(imageVariant=ApiImageVariant.from_model(model=imageVariant))
 
     @router.get('/images/{imageId}/go')
-    async def go_to_image(imageId: str, w: Optional[int] = None, h: Optional[int] = None):
+    async def go_to_image(imageId: str, w: Optional[int] = None, h: Optional[int] = None):  # pylint: disable=invalid-name
         await manager.go_to_image(imageId=imageId, width=w, height=h)
 
     # @router.post('/generate-image-upload', response_model=GenerateImageUploadResponse)
