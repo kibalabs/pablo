@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 
+
 class ImageFormat:
     JPG = "image/jpg"
     PNG = "image/png"

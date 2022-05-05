@@ -1,5 +1,5 @@
-from fastapi import APIRouter
 from core.exceptions import FoundRedirectException
+from fastapi import APIRouter
 
 from pablo.api.models_v1 import *
 from pablo.internal.pablo_manager import PabloManager

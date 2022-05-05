@@ -6,6 +6,7 @@ from starlette.responses import Response
 from pablo.api.models_v1 import *
 from pablo.internal.pablo_manager import PabloManager
 
+
 def create_api(manager: PabloManager) -> APIRouter():
     router = APIRouter()
 

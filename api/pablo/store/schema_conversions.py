@@ -1,10 +1,12 @@
 import datetime
 from typing import Mapping
 
-from pablo.internal.model import Image, UrlUpload
+from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
-from pablo.store.schema import ImagesTable, UrlUploadsTable
+from pablo.internal.model import UrlUpload
+from pablo.store.schema import ImagesTable
 from pablo.store.schema import ImageVariantsTable
+from pablo.store.schema import UrlUploadsTable
 
 
 def image_from_row(row: Mapping) -> Image:
