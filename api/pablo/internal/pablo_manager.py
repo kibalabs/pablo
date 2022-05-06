@@ -146,6 +146,12 @@ class PabloManager:
     #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/heights/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
     #     return imageId
 
+    async def get_ipfs_head(self, cid: str) -> Response:
+        isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
+        if not isExisting:
+            response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
+        return Response(content=None, headers=response.headers)
+
     async def get_ipfs(self, cid: str) -> Response:
         isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
         if not isExisting:
@@ -155,7 +161,7 @@ class PabloManager:
     async def load_ipfs(self, cid: str) -> None:
         isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
         if isExisting:
-            return
+            return None
         localFilePath = f'./tmp/{cid.replace("/", "_")}/download-for-upload'
         try:
             response = await self.requester.get(url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', outputFilePath=localFilePath, timeout=600)
