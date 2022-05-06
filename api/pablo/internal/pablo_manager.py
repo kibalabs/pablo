@@ -148,8 +148,9 @@ class PabloManager:
 
     async def get_ipfs_head(self, cid: str) -> Response:
         isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
-        if not isExisting:
-            response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
+        if isExisting:
+            raise PermanentRedirectException(location=f'{self.ipfsServingUrl}/{cid}')
+        response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
         return Response(content=None, headers=response.headers)
 
     async def get_ipfs(self, cid: str) -> Response:
