@@ -34,6 +34,7 @@ resource "aws_s3_bucket_cors_configuration" "example" {
       "https://pfpkit.xyz",
       "https://mdtp-gallery.kibalabs.com",
       "https://milliondollartokenpage.com",
+      "https://nft.tokenhunt.io",
     ]
     expose_headers = ["ETag"]
     max_age_seconds = 86400

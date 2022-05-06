@@ -44,10 +44,16 @@ def create_api(manager: PabloManager) -> APIRouter():
         imageId = await manager.upload_image_url(url=request.url)
         return UploadImageUrlResponse(imageId=imageId)
 
+    # TODO(krishan711): how can this be kiba-ified
     @router.get('/ipfs/{cid:path}')
     async def get_ipfs(cid: str) -> Response:
-        # TODO(krishan711): how can this be kiba-ified
         response = await manager.get_ipfs(cid=cid)
+        return response
+
+    # TODO(krishan711): how can this be kiba-ified
+    @router.head('/ipfs/{cid:path}')
+    async def get_ipfs_head(cid: str) -> Response:
+        response = await manager.get_ipfs_head(cid=cid)
         return response
 
     return router
