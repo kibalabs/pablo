@@ -168,4 +168,5 @@ class PabloManager:
         except ResponseException as exception:
             if exception.statusCode > 400:
                 raise NotFoundException(message=exception.message)
+            raise
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.ipfsS3Path}/{cid}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE, contentType=response.headers['Content-Type'])
