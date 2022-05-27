@@ -18,6 +18,7 @@ resource "aws_cloudfront_cache_policy" "default" {
           "Access-Control-Request-Method",
           "Access-Control-Allow-Origin",
           "Access-Control-Request-Headers",
+          "Authorization",
         ]
       }
     }
@@ -31,7 +32,7 @@ resource "aws_cloudfront_cache_policy" "api" {
   name = "${local.project}-api"
   default_ttl = 60
   min_ttl = 0
-  max_ttl = 60
+  max_ttl = 31536000
 
   parameters_in_cache_key_and_forwarded_to_origin {
     enable_accept_encoding_brotli = true
@@ -44,6 +45,10 @@ resource "aws_cloudfront_cache_policy" "api" {
       header_behavior = "whitelist"
       headers {
         items = [
+          "Origin",
+          "Access-Control-Request-Method",
+          "Access-Control-Allow-Origin",
+          "Access-Control-Request-Headers",
           "Authorization",
         ]
       }

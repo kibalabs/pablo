@@ -31,6 +31,7 @@ resource "aws_s3_bucket_cors_configuration" "example" {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "HEAD"]
     allowed_origins = [
+      "http://localhost:3000",
       "https://pfpkit.xyz",
       "https://mdtp-gallery.kibalabs.com",
       "https://milliondollartokenpage.com",
