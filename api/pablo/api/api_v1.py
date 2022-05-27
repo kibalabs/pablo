@@ -54,12 +54,8 @@ def create_api(manager: PabloManager) -> APIRouter():
 
     # TODO(krishan711): how can this be kiba-ified
     @router.head('/ipfs/{cid:path}')
-<<<<<<< Updated upstream
-    async def get_ipfs_head(cid: str) -> Response:
-=======
     async def get_ipfs_head(cid: str, rawRequest: Request) -> Response:
         logging.info('rawRequest', rawRequest)
->>>>>>> Stashed changes
         response = await manager.get_ipfs_head(cid=cid)
         return response
 
