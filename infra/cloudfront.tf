@@ -16,7 +16,6 @@ resource "aws_cloudfront_cache_policy" "default" {
         items = [
           "Origin",
           "Access-Control-Request-Method",
-          "Access-Control-Allow-Origin",
           "Access-Control-Request-Headers",
           "Authorization",
         ]
@@ -47,7 +46,6 @@ resource "aws_cloudfront_cache_policy" "api" {
         items = [
           "Origin",
           "Access-Control-Request-Method",
-          "Access-Control-Allow-Origin",
           "Access-Control-Request-Headers",
           "Authorization",
         ]
