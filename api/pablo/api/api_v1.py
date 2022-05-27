@@ -1,6 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from core import logging
+from fastapi import APIRouter
+from fastapi import Request
 from starlette.responses import Response
 from pablo.api.models_v1 import ApiImage, ApiImageVariant, GetImageResponse, GetImageVariantResponse, ListImageVariantsResponse, UploadImageUrlRequest, UploadImageUrlResponse
 
@@ -53,7 +55,7 @@ def create_api(manager: PabloManager) -> APIRouter():
     # TODO(krishan711): how can this be kiba-ified
     @router.head('/ipfs/{cid:path}')
     async def get_ipfs_head(cid: str, rawRequest: Request) -> Response:
-        print('rawRequest', rawRequest)
+        logging.info('rawRequest', rawRequest)
         response = await manager.get_ipfs_head(cid=cid)
         return response
 
