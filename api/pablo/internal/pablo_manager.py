@@ -1,6 +1,5 @@
 from typing import Optional
 from typing import Sequence
-from urllib import response
 
 from core import logging
 from core.exceptions import BadRequestException
@@ -160,10 +159,9 @@ class PabloManager:
         while idx <= len(IPFS_PROVIDER_PREFIXES):
             try:
                 providerResponse = await self.requester.make_request(method='HEAD', url=f'{IPFS_PROVIDER_PREFIXES[idx]}{cid}', timeout=600)
-            except:
+            except ResponseException:
                 #Not sure what to do, I want to go to the next index in the prefixes
                 idx += 1
-                pass
 
             if providerResponse.status_code == 200:
                 return providerResponse
