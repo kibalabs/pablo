@@ -156,17 +156,19 @@ class PabloManager:
     #     return imageId
 
     async def _response(self, cid):
-        for prefix in IPFS_PROVIDER_PREFIXES:
+        idx = 0
+        while idx <= len(IPFS_PROVIDER_PREFIXES):
             try:
-                response = await self.requester.make_request(method='HEAD', url=f'{prefix}{cid}', timeout=600)
+                providerResponse = await self.requester.make_request(method='HEAD', url=f'{IPFS_PROVIDER_PREFIXES[idx]}{cid}', timeout=600)
             except:
                 #Not sure what to do, I want to go to the next index in the prefixes
+                idx += 1
                 pass
-            
-            if response.status_code == 200:
-                return response
-        return response
-        
+
+            if providerResponse.status_code == 200:
+                return providerResponse
+        return providerResponse
+
 
     async def get_ipfs_head(self, cid: str) -> Response:
         try:
