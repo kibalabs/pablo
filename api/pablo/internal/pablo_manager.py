@@ -1,5 +1,6 @@
 from typing import Optional
 from typing import Sequence
+from urllib import response
 
 from core import logging
 from core.exceptions import BadRequestException
@@ -23,6 +24,14 @@ from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
 
+
+IPFS_PROVIDER_PREFIXES = [
+    'https://ipfs.io/ipfs/',
+    'https://ipfs.infura.io/ipfs/',
+    'https://ipfs.foundation.app/ipfs/',
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://kibalabs.mypinata.cloud/ipfs/'
+]
 
 class PabloManager:
 
@@ -146,21 +155,26 @@ class PabloManager:
     #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/heights/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
     #     return imageId
 
+    async def _response(self, cid):
+        for prefix in IPFS_PROVIDER_PREFIXES:
+            try:
+                response = await self.requester.make_request(method='HEAD', url=f'{prefix}{cid}', timeout=600)
+            except:
+                #Not sure what to do, I want to go to the next index in the prefixes
+                pass
+            
+            if response.status_code == 200:
+                return response
+        return response
+        
+
     async def get_ipfs_head(self, cid: str) -> Response:
         try:
             headers = await self.s3Manager.head_file(filePath=f'{self.ipfsS3Path}/{cid}')
         except NotFoundException:
             headers = None
         if headers is None:
-            try:
-                response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=600)
-            except ResponseException:
-                try:
-                    response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
-                except ResponseException as exception:
-                    if exception.statusCode >= 400:
-                        raise NotFoundException(message=exception.message)
-                    raise
+            response = await self._response(cid=cid)
             headers = response.headers
         return Response(content=None, headers=headers)
 
