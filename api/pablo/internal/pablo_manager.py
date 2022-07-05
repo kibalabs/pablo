@@ -27,7 +27,6 @@ from pablo.store.schema import ImageVariantsTable
 IPFS_PROVIDER_PREFIXES = [
     'https://ipfs.io/ipfs/',
     'https://ipfs.infura.io/ipfs/',
-    'https://ipfs.foundation.app/ipfs/',
     'https://gateway.pinata.cloud/ipfs/',
     'https://kibalabs.mypinata.cloud/ipfs/'
 ]
