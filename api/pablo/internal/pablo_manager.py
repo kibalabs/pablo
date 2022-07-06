@@ -153,10 +153,10 @@ class PabloManager:
             headers = None
         if headers is None:
             try:
-                response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=600)
+                response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
             except ResponseException:
                 try:
-                    response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
+                    response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=60)
                 except ResponseException as exception:
                     if exception.statusCode >= 400:
                         raise NotFoundException(message=exception.message)
@@ -176,10 +176,10 @@ class PabloManager:
             return None
         localFilePath = f'./tmp/{cid.replace("/", "_")}/download-for-upload'
         try:
-            response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=600)
+            response = await self.requester.make_request(method='GET', url=f'https://ipfs.io/ipfs/{cid}', outputFilePath=localFilePath, timeout=600)
         except ResponseException:
             try:
-                response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=600)
+                response = await self.requester.make_request(method='GET', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', outputFilePath=localFilePath, timeout=600)
             except ResponseException as exception:
                 if exception.statusCode >= 400:
                     raise NotFoundException(message=exception.message)
