@@ -1,7 +1,8 @@
 from typing import List
 
-from pablo.internal.model import Image
 from pydantic import BaseModel
+
+from pablo.internal.model import Image
 
 
 class ApiImage(BaseModel):

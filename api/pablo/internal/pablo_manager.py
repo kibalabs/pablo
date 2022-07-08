@@ -21,15 +21,15 @@ from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
 from core.util.typing_util import JSON
+from starlette.responses import Response
+
 from pablo.internal.model import IMAGE_FORMAT_MAP
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
-from starlette.responses import Response
 
-# ipfs://QmPpuVyyzvsTidhALUZZYdJfxRsDYVZRH1eYZ9fUeZxaea/3966
 
 class IpfsRequester(Requester):
 

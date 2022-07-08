@@ -1,5 +1,6 @@
 from core.exceptions import FoundRedirectException
 from fastapi import APIRouter
+
 from pablo.internal.pablo_manager import PabloManager
 
 CLOUDFRONT_URL = 'https://d35ci2i0uce4j6.cloudfront.net'
