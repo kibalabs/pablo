@@ -49,12 +49,6 @@ IPFS_PROVIDER_PREFIXES = [
     IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
 ]
 
-IPFS_PROVIDER_PREFIXES = [
-    'https://ipfs.io/ipfs/',
-    'https://ipfs.infura.io/ipfs/',
-    'https://gateway.pinata.cloud/ipfs/',
-    'https://kibalabs.mypinata.cloud/ipfs/'
-]
 
 class PabloManager:
 
