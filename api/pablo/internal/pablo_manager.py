@@ -53,17 +53,17 @@ class IpfsRequester(Requester):
     def __init__(self, ipfsPrefix: str, headers: Optional[Dict[str, str]] = None, shouldFollowRedirects: bool = True):
         super().__init__(headers=headers, shouldFollowRedirects=shouldFollowRedirects)
         self.ipfsPrefix = ipfsPrefix
-
+        
     async def make_request(self, method: str, url: str, dataDict: Optional[JSON] = None, data: Optional[bytes] = None, formDataDict: Optional[Dict[str, Union[str, FileContent]]] = None, formFiles: Optional[Sequence[Tuple[str, Tuple[str, FileContent]]]] = None, timeout: Optional[int] = 10, headers: Optional[Dict[str, str]] = None, outputFilePath: Optional[str] = None) -> KibaResponse:
         if url.startswith('ipfs://'):
             url = url.replace('ipfs://', self.ipfsPrefix, 1)
-        await super().make_request(method=method, url=url, dataDict=dataDict, data=data, formDataDict=formFiles, formFiles=formFiles, timeout=timeout, headers=headers, outputFilePath=outputFilePath)
+        return await super().make_request(method=method, url=url, dataDict=dataDict, data=data, formDataDict=formFiles, formFiles=formFiles, timeout=timeout, headers=headers, outputFilePath=outputFilePath)
 
 IPFS_PROVIDER_PREFIXES = [
-    IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
-    # IpfsRequester(ipfsPrefix='https://ipfs.infura.io/ipfs/'),
-    # IpfsRequester(ipfsPrefix='https://gateway.pinata.cloud/ipfs/'),
-    # IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
+    IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs'),
+    IpfsRequester(ipfsPrefix='https://ipfs.infura.io/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://gateway.pinata.cloud/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
 ]
 
 class PabloManager:
@@ -190,7 +190,6 @@ class PabloManager:
     #     return imageId
 
     async def get_ipfs_head(self, cid: str) -> Response:
-        print(cid)
         try:
             headers = await self.s3Manager.head_file(filePath=f'{self.ipfsS3Path}/{cid}')
         except NotFoundException:
@@ -200,7 +199,7 @@ class PabloManager:
             response = None
             for ipfsRequester in self.ipfsRequesters:
                 try:
-                    response = await ipfsRequester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
+                    response = await ipfsRequester.make_request(method='HEAD', url=f'{cid}', timeout=60)
                     break
                 except ResponseException as exception:
                     exceptions.append(exception)
