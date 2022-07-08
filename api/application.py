@@ -21,6 +21,13 @@ from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 
+IPFS_PROVIDER_PREFIXES = [
+    'https://ipfs.io/ipfs/',
+    'https://ipfs.infura.io/ipfs/',
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://kibalabs.mypinata.cloud/ipfs/'
+]
+
 requestIdHolder = RequestIdHolder()
 name = os.environ.get('NAME', 'pablo-api')
 version = os.environ.get('VERSION', 'local')
@@ -41,7 +48,7 @@ workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'
 s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
 requester = Requester()
-manager = PabloManager(retriever=retriever, saver=saver, requester=requester, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
+manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=IPFS_PROVIDER_PREFIXES, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
 
 app = FastAPI()
 app.include_router(router=create_health_api(name=name, version=version, environment=environment))
