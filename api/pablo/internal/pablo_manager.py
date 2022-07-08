@@ -66,6 +66,13 @@ IPFS_PROVIDER_PREFIXES = [
     IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
 ]
 
+IPFS_PROVIDER_PREFIXES = [
+    'https://ipfs.io/ipfs/',
+    'https://ipfs.infura.io/ipfs/',
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://kibalabs.mypinata.cloud/ipfs/'
+]
+
 class PabloManager:
 
     def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
@@ -188,6 +195,20 @@ class PabloManager:
     #             await self._save_image_to_file(image=resizedImage, fileName=resizedFilename)
     #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/heights/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
     #     return imageId
+
+    async def _response(self, cid):
+        idx = 0
+        while idx <= len(IPFS_PROVIDER_PREFIXES):
+            try:
+                providerResponse = await self.requester.make_request(method='HEAD', url=f'{IPFS_PROVIDER_PREFIXES[idx]}{cid}', timeout=600)
+            except ResponseException:
+                #Not sure what to do, I want to go to the next index in the prefixes
+                idx += 1
+
+            if providerResponse.status_code == 200:
+                return providerResponse
+        return providerResponse
+
 
     async def get_ipfs_head(self, cid: str) -> Response:
         try:
