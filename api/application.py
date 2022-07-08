@@ -23,7 +23,6 @@ from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 
-
 requestIdHolder = RequestIdHolder()
 name = os.environ.get('NAME', 'pablo-api')
 version = os.environ.get('VERSION', 'local')
