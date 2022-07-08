@@ -1,14 +1,5 @@
-from ctypes import Union
-from typing import Dict, List, Optional
-from typing import Sequence
-import json
-import os
-import urllib.parse as urlparse
-from io import IOBase
-from typing import IO
 from typing import Dict
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -19,6 +10,8 @@ from core.exceptions import BadRequestException
 from core.exceptions import NotFoundException
 from core.exceptions import PermanentRedirectException
 from core.queues.sqs_message_queue import SqsMessageQueue
+from core.requester import FileContent
+from core.requester import KibaResponse
 from core.requester import Requester
 from core.requester import ResponseException
 from core.s3_manager import S3Manager
@@ -27,24 +20,14 @@ from core.store.retriever import IntegerFieldFilter
 from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
-from starlette.responses import Response
-from typing import Union
-
-import httpx
-
-from core import logging
-from core.util import dict_util
-from core.util import file_util
 from core.util.typing_util import JSON
-
-from core.requester import FileContent, KibaResponse
-
 from pablo.internal.model import IMAGE_FORMAT_MAP
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
+from starlette.responses import Response
 
 # ipfs://QmPpuVyyzvsTidhALUZZYdJfxRsDYVZRH1eYZ9fUeZxaea/3966
 
@@ -53,7 +36,7 @@ class IpfsRequester(Requester):
     def __init__(self, ipfsPrefix: str, headers: Optional[Dict[str, str]] = None, shouldFollowRedirects: bool = True):
         super().__init__(headers=headers, shouldFollowRedirects=shouldFollowRedirects)
         self.ipfsPrefix = ipfsPrefix
-        
+
     async def make_request(self, method: str, url: str, dataDict: Optional[JSON] = None, data: Optional[bytes] = None, formDataDict: Optional[Dict[str, Union[str, FileContent]]] = None, formFiles: Optional[Sequence[Tuple[str, Tuple[str, FileContent]]]] = None, timeout: Optional[int] = 10, headers: Optional[Dict[str, str]] = None, outputFilePath: Optional[str] = None) -> KibaResponse:
         if url.startswith('ipfs://'):
             url = url.replace('ipfs://', self.ipfsPrefix, 1)
@@ -195,20 +178,6 @@ class PabloManager:
     #             await self._save_image_to_file(image=resizedImage, fileName=resizedFilename)
     #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/heights/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
     #     return imageId
-
-    async def _response(self, cid):
-        idx = 0
-        while idx <= len(IPFS_PROVIDER_PREFIXES):
-            try:
-                providerResponse = await self.requester.make_request(method='HEAD', url=f'{IPFS_PROVIDER_PREFIXES[idx]}{cid}', timeout=600)
-            except ResponseException:
-                #Not sure what to do, I want to go to the next index in the prefixes
-                idx += 1
-
-            if providerResponse.status_code == 200:
-                return providerResponse
-        return providerResponse
-
 
     async def get_ipfs_head(self, cid: str) -> Response:
         try:

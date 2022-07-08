@@ -2,11 +2,10 @@ from typing import Optional
 from typing import Sequence
 
 from core.exceptions import NotFoundException
+from core.store.database import DatabaseConnection
 from core.store.retriever import FieldFilter
 from core.store.retriever import Order
 from core.store.retriever import Retriever as CoreRetriever
-from core.store.database import DatabaseConnection
-
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
 from pablo.internal.model import UrlUpload

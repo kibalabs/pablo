@@ -1,8 +1,8 @@
 from typing import Optional
+
+from core.store.database import DatabaseConnection
 from core.store.saver import Saver as CoreSaver
 from core.util import date_util
-from core.store.database import DatabaseConnection
-
 from pablo.internal.model import Image
 from pablo.store.schema import ImagesTable
 

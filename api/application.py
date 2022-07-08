@@ -4,10 +4,13 @@ from typing import List
 
 from core import logging
 from core.api.health import create_api as create_health_api
-from core.api.middleware.database_connection_middleware import DatabaseConnectionMiddleware
-from core.api.middleware.exception_handling_middleware import ExceptionHandlingMiddleware
+from core.api.middleware.database_connection_middleware import \
+    DatabaseConnectionMiddleware
+from core.api.middleware.exception_handling_middleware import \
+    ExceptionHandlingMiddleware
 from core.api.middleware.logging_middleware import LoggingMiddleware
-from core.api.middleware.server_headers_middleware import ServerHeadersMiddleware
+from core.api.middleware.server_headers_middleware import \
+    ServerHeadersMiddleware
 from core.queues.sqs_message_queue import SqsMessageQueue
 from core.requester import Requester
 from core.s3_manager import S3Manager
@@ -15,13 +18,13 @@ from core.store.database import Database
 from core.util.value_holder import RequestIdHolder
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.pablo.internal.pablo_manager import IpfsRequester
-
-from pablo.api.api_v1 import create_api as create_v1_api
-from pablo.api.static import create_api as create_static_api
 from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
+
+from api.pablo.internal.pablo_manager import IpfsRequester
+from pablo.api.api_v1 import create_api as create_v1_api
+from pablo.api.static import create_api as create_static_api
 
 requestIdHolder = RequestIdHolder()
 name = os.environ.get('NAME', 'pablo-api')
