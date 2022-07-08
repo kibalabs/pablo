@@ -1,5 +1,18 @@
+from ctypes import Union
+from typing import Dict, List, Optional
+from typing import Sequence
+import json
+import os
+import urllib.parse as urlparse
+from io import IOBase
+from typing import IO
+from typing import Dict
+from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 from core import logging
 from core.exceptions import BadRequestException
@@ -15,6 +28,16 @@ from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
 from starlette.responses import Response
+from typing import Union
+
+import httpx
+
+from core import logging
+from core.util import dict_util
+from core.util import file_util
+from core.util.typing_util import JSON
+
+from core.requester import FileContent, KibaResponse
 
 from pablo.internal.model import IMAGE_FORMAT_MAP
 from pablo.internal.model import Image
@@ -24,12 +47,25 @@ from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
 
 
+class IpfsRequester(Requester):
+
+    def __init__(self, ipfsPrefix: str, headers: Optional[Dict[str, str]] = None, shouldFollowRedirects: bool = True):
+        super().__init__(headers=headers, shouldFollowRedirects=shouldFollowRedirects)
+        self.ipfsPrefix = ipfsPrefix
+
+    async def make_request(self, method: str, url: str, dataDict: Optional[JSON] = None, data: Optional[bytes] = None, formDataDict: Optional[Dict[str, Union[str, FileContent]]] = None, formFiles: Optional[Sequence[Tuple[str, Tuple[str, FileContent]]]] = None, timeout: Optional[int] = 10, headers: Optional[Dict[str, str]] = None, outputFilePath: Optional[str] = None) -> KibaResponse:
+        if url.startswith('ipfs://'):
+            url = url.replace('ipfs://', self.ipfsPrefix, 1)
+        super().make_request(method=method, url=url, dataDict=dataDict, data=data, formDataDict=formFiles, formFiles=formFiles, timeout=timeout, headers=headers, outputFilePath=outputFilePath)
+
+
 class PabloManager:
 
-    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
+    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
+        self.ipfsRequesters = ipfsRequesters
         self.workQueue = workQueue
         self.s3Manager = s3Manager
         self.bucketName = bucketName
@@ -152,15 +188,16 @@ class PabloManager:
         except NotFoundException:
             headers = None
         if headers is None:
-            try:
-                response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
-            except ResponseException:
+            exceptions = []
+            response = None
+            for ipfsRequester in self.ipfsRequesters:
                 try:
-                    response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=60)
+                    response = await ipfsRequester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
+                    break
                 except ResponseException as exception:
-                    if exception.statusCode >= 400:
-                        raise NotFoundException(message=exception.message)
-                    raise
+                    exceptions.append(exception)
+            if not response:
+                raise exceptions[-1]
             headers = response.headers
         return Response(content=None, headers=headers)
 

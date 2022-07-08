@@ -53,7 +53,6 @@ app.add_middleware(LoggingMiddleware, requestIdHolder=requestIdHolder)
 app.add_middleware(DatabaseConnectionMiddleware, database=database)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_methods=['*'], allow_headers=['*'], expose_headers=['*'], allow_origins=[
     'http://localhost:3000',
-    'https://sprites-gallery.tokenpage.xyz'
 ])
 
 @app.on_event('startup')
