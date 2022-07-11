@@ -182,7 +182,7 @@ class PabloManager:
         for ipfsRequester in self.ipfsRequesters:
             logging.stat(name='IPFS', key=ipfsRequester.ipfsHost, value=1)
             try:
-                response = await ipfsRequester.make_request(method='GET', url=f'ipfs://{cid}', outputFilePath=localFilePath, timeout=60)
+                response = await ipfsRequester.make_request(method='GET', url=f'ipfs://{cid}', outputFilePath=localFilePath, timeout=600)
                 break
             except ResponseException as exception:
                 logging.stat(name='IPFS-ERROR', key=ipfsRequester.ipfsHost, value=exception.statusCode)
