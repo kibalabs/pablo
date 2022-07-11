@@ -45,8 +45,8 @@ s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], acc
 requester = Requester()
 infuraIpfsAuth = BasicAuthentication(username='INFURA_IPFS_ID', password=os.environ["INFURA_IPFS_SECRET"])
 ipfsRequesters = [
-    IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
     IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
     IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
 ]
 manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
