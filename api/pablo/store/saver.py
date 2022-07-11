@@ -10,7 +10,7 @@ from pablo.store.schema import ImagesTable
 
 class Saver(CoreSaver):
 
-    async def create_image(self, imageId: str, format: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:
+    async def create_image(self, imageId: str, format: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:  # pylint: disable=redefined-builtin
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
         values = {

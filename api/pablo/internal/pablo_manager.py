@@ -1,17 +1,13 @@
-from typing import Dict
+
 from typing import List
 from typing import Optional
 from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 from core import logging
 from core.exceptions import BadRequestException
 from core.exceptions import NotFoundException
 from core.exceptions import PermanentRedirectException
 from core.queues.sqs_message_queue import SqsMessageQueue
-from core.requester import FileContent
-from core.requester import KibaResponse
 from core.requester import Requester
 from core.requester import ResponseException
 from core.s3_manager import S3Manager
@@ -20,28 +16,15 @@ from core.store.retriever import IntegerFieldFilter
 from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
-from core.util.typing_util import JSON
 from starlette.responses import Response
 
+from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.model import IMAGE_FORMAT_MAP
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
-
-
-class IpfsRequester(Requester):
-
-    def __init__(self, ipfsPrefix: str, headers: Optional[Dict[str, str]] = None, shouldFollowRedirects: bool = True):
-        super().__init__(headers=headers, shouldFollowRedirects=shouldFollowRedirects)
-        self.ipfsPrefix = ipfsPrefix
-
-    async def make_request(self, method: str, url: str, dataDict: Optional[JSON] = None, data: Optional[bytes] = None, formDataDict: Optional[Dict[str, Union[str, FileContent]]] = None, formFiles: Optional[Sequence[Tuple[str, Tuple[str, FileContent]]]] = None, timeout: Optional[int] = 10, headers: Optional[Dict[str, str]] = None, outputFilePath: Optional[str] = None) -> KibaResponse:
-        if url.startswith('ipfs://'):
-            url = url.replace('ipfs://', self.ipfsPrefix, 1)
-        return await super().make_request(method=method, url=url, dataDict=dataDict, data=data, formDataDict=formFiles, formFiles=formFiles, timeout=timeout, headers=headers, outputFilePath=outputFilePath)
-
 
 
 class PabloManager:
@@ -177,7 +160,7 @@ class PabloManager:
             response = None
             for ipfsRequester in self.ipfsRequesters:
                 try:
-                    response = await ipfsRequester.make_request(method='HEAD', url=f'{cid}', timeout=60)
+                    response = await ipfsRequester.make_request(method='HEAD', url=f'ipfs://{cid}', timeout=60)
                     break
                 except ResponseException as exception:
                     exceptions.append(exception)
@@ -187,9 +170,7 @@ class PabloManager:
         return Response(content=None, headers=headers)
 
     async def get_ipfs(self, cid: str) -> Response:
-        isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
-        if not isExisting:
-            await self.load_ipfs(cid=cid)
+        await self.load_ipfs(cid=cid)
         raise PermanentRedirectException(location=f'{self.ipfsServingUrl}/{cid}')
 
     async def load_ipfs(self, cid: str) -> None:
@@ -200,10 +181,12 @@ class PabloManager:
         exceptions = []
         response = None
         for ipfsRequester in self.ipfsRequesters:
+            logging.stat(name='IPFS', key=ipfsRequester.ipfsHost, value=1)
             try:
-                response = await ipfsRequester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
+                response = await ipfsRequester.make_request(method='GET', url=f'ipfs://{cid}', outputFilePath=localFilePath, timeout=60)
                 break
             except ResponseException as exception:
+                logging.stat(name='IPFS-ERROR', key=ipfsRequester.ipfsHost, value=exception.statusCode)
                 exceptions.append(exception)
         if not response:
             raise exceptions[-1]
