@@ -1,3 +1,4 @@
+from typing import List
 from typing import Optional
 from typing import Sequence
 
@@ -16,6 +17,7 @@ from core.store.retriever import StringFieldFilter
 from core.util import file_util
 from starlette.responses import Response
 
+from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.model import IMAGE_FORMAT_MAP
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
@@ -26,10 +28,11 @@ from pablo.store.schema import ImageVariantsTable
 
 class PabloManager:
 
-    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
+    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
+        self.ipfsRequesters = ipfsRequesters
         self.workQueue = workQueue
         self.s3Manager = s3Manager
         self.bucketName = bucketName
@@ -152,22 +155,21 @@ class PabloManager:
         except NotFoundException:
             headers = None
         if headers is None:
-            try:
-                response = await self.requester.make_request(method='HEAD', url=f'https://ipfs.io/ipfs/{cid}', timeout=60)
-            except ResponseException:
+            exceptions = []
+            response = None
+            for ipfsRequester in self.ipfsRequesters:
                 try:
-                    response = await self.requester.make_request(method='HEAD', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', timeout=60)
+                    response = await ipfsRequester.make_request(method='HEAD', url=f'ipfs://{cid}', timeout=60)
+                    break
                 except ResponseException as exception:
-                    if exception.statusCode >= 400:
-                        raise NotFoundException(message=exception.message)
-                    raise
+                    exceptions.append(exception)
+            if not response:
+                raise exceptions[-1]
             headers = response.headers
         return Response(content=None, headers=headers)
 
     async def get_ipfs(self, cid: str) -> Response:
-        isExisting = await self.s3Manager.check_file_exists(filePath=f'{self.ipfsS3Path}/{cid}')
-        if not isExisting:
-            await self.load_ipfs(cid=cid)
+        await self.load_ipfs(cid=cid)
         raise PermanentRedirectException(location=f'{self.ipfsServingUrl}/{cid}')
 
     async def load_ipfs(self, cid: str) -> None:
@@ -175,14 +177,17 @@ class PabloManager:
         if isExisting:
             return None
         localFilePath = f'./tmp/{cid.replace("/", "_")}/download-for-upload'
-        try:
-            response = await self.requester.make_request(method='GET', url=f'https://ipfs.io/ipfs/{cid}', outputFilePath=localFilePath, timeout=600)
-        except ResponseException:
+        exceptions = []
+        response = None
+        for ipfsRequester in self.ipfsRequesters:
+            logging.stat(name='IPFS', key=ipfsRequester.ipfsHost, value=1)
             try:
-                response = await self.requester.make_request(method='GET', url=f'https://kibalabs.mypinata.cloud/ipfs/{cid}', outputFilePath=localFilePath, timeout=600)
+                response = await ipfsRequester.make_request(method='GET', url=f'ipfs://{cid}', outputFilePath=localFilePath, timeout=600)
+                break
             except ResponseException as exception:
-                if exception.statusCode >= 400:
-                    raise NotFoundException(message=exception.message)
-                raise
+                logging.stat(name='IPFS-ERROR', key=ipfsRequester.ipfsHost, value=exception.statusCode)
+                exceptions.append(exception)
+        if not response:
+            raise exceptions[-1]
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.ipfsS3Path}/{cid}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE, contentType=response.headers['Content-Type'])
         await file_util.remove_file(filePath=localFilePath)

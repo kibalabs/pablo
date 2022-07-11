@@ -7,6 +7,7 @@ from core.api.middleware.database_connection_middleware import DatabaseConnectio
 from core.api.middleware.exception_handling_middleware import ExceptionHandlingMiddleware
 from core.api.middleware.logging_middleware import LoggingMiddleware
 from core.api.middleware.server_headers_middleware import ServerHeadersMiddleware
+from core.http.basic_authentication import BasicAuthentication
 from core.queues.sqs_message_queue import SqsMessageQueue
 from core.requester import Requester
 from core.s3_manager import S3Manager
@@ -17,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from pablo.api.api_v1 import create_api as create_v1_api
 from pablo.api.static import create_api as create_static_api
+from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
@@ -41,7 +43,13 @@ workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'
 s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
 requester = Requester()
-manager = PabloManager(retriever=retriever, saver=saver, requester=requester, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
+infuraIpfsAuth = BasicAuthentication(username='INFURA_IPFS_ID', password=os.environ["INFURA_IPFS_SECRET"])
+ipfsRequesters = [
+    IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
+    IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
+]
+manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
 
 app = FastAPI()
 app.include_router(router=create_health_api(name=name, version=version, environment=environment))
@@ -53,7 +61,6 @@ app.add_middleware(LoggingMiddleware, requestIdHolder=requestIdHolder)
 app.add_middleware(DatabaseConnectionMiddleware, database=database)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_methods=['*'], allow_headers=['*'], expose_headers=['*'], allow_origins=[
     'http://localhost:3000',
-    'https://sprites-gallery.tokenpage.xyz'
 ])
 
 @app.on_event('startup')
@@ -64,6 +71,8 @@ async def startup():
 
 @app.on_event('shutdown')
 async def shutdown():
+    for ipfsRequester in ipfsRequesters:
+        await ipfsRequester.close_connections()
     await requester.close_connections()
     await s3Manager.disconnect()
     await workQueue.disconnect()
