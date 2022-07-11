@@ -20,18 +20,18 @@ CREATE TABLE tbl_image_variants (
     height INTEGER NOT NULL,
     area INTEGER NOT NULL
 );
-CREATE INDEX tbl_images_updated_date ON tbl_images (updated_date);
+CREATE INDEX tbl_image_variants_updated_date ON tbl_image_variants (updated_date);
 CREATE INDEX tbl_image_variants_image_id_area ON tbl_image_variants (image_id, area);
 CREATE INDEX tbl_image_variants_image_id ON tbl_image_variants (image_id);
 CREATE INDEX tbl_image_variants_area ON tbl_image_variants (area);
 
 CREATE TABLE tbl_url_uploads (
-    id TEXT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     created_date TIMESTAMP NOT NULL,
     updated_date TIMESTAMP NOT NULL,
     url TEXT NOT NULL,
     image_id TEXT NOT NULL
 );
-CREATE UNIQUE INDEX tbl_images_url ON tbl_images (url);
-CREATE INDEX tbl_images_updated_date ON tbl_images (updated_date);
-CREATE INDEX tbl_images_image_id ON tbl_images (image_id);
+CREATE UNIQUE INDEX tbl_url_uploads_url ON tbl_url_uploads (url);
+CREATE INDEX tbl_url_uploads_updated_date ON tbl_url_uploads (updated_date);
+CREATE INDEX tbl_url_uploads_image_id ON tbl_url_uploads (image_id);

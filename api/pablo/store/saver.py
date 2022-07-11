@@ -1,22 +1,37 @@
+from typing import Optional
+
+from core.store.database import DatabaseConnection
 from core.store.saver import Saver as CoreSaver
+from core.util import date_util
+
+from pablo.internal.model import Image
+from pablo.store.schema import ImagesTable
 
 
 class Saver(CoreSaver):
 
-    pass
-    # async def create_image(self, transactionHash: str, registryAddress: str, fromAddress: str, toAddress: str, tokenId: int, value: int, gasLimit: int, gasPrice: int, gasUsed: int, blockNumber: int, blockHash: str, blockDate: datetime.datetime) -> TokenTransfer:
-    #     tokenTransferId = await self._execute(query=TokenTransfersTable.insert(), values={
-    #         TokenTransfersTable.c.transactionHash.key: transactionHash,
-    #         TokenTransfersTable.c.registryAddress.key: registryAddress,
-    #         TokenTransfersTable.c.fromAddress.key: fromAddress,
-    #         TokenTransfersTable.c.toAddress.key: toAddress,
-    #         TokenTransfersTable.c.tokenId.key: tokenId,
-    #         TokenTransfersTable.c.value.key: value,
-    #         TokenTransfersTable.c.gasLimit.key: gasLimit,
-    #         TokenTransfersTable.c.gasPrice.key: gasPrice,
-    #         TokenTransfersTable.c.gasUsed.key: gasUsed,
-    #         TokenTransfersTable.c.blockNumber.key: blockNumber,
-    #         TokenTransfersTable.c.blockHash.key: blockHash,
-    #         TokenTransfersTable.c.blockDate.key: blockDate,
-    #     })
-    #     return TokenTransfer(tokenTransferId=tokenTransferId, transactionHash=transactionHash, registryAddress=registryAddress, fromAddress=fromAddress, toAddress=toAddress, tokenId=tokenId, value=value, gasLimit=gasLimit, gasPrice=gasPrice, gasUsed=gasUsed, blockNumber=blockNumber, blockHash=blockHash, blockDate=blockDate)
+    async def create_image(self, imageId: str, format: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:
+        createdDate = date_util.datetime_from_now()
+        updatedDate = createdDate
+        values = {
+            ImagesTable.c.imageId.key: imageId,
+            ImagesTable.c.createdDate.key: createdDate,
+            ImagesTable.c.updatedDate.key: updatedDate,
+            ImagesTable.c.format.key: format,
+            ImagesTable.c.filename.key: filename,
+            ImagesTable.c.width.key: width,
+            ImagesTable.c.height.key: height,
+            ImagesTable.c.area.key: area,
+        }
+        query = ImagesTable.insert().values(values)
+        await self._execute(query=query, connection=connection)
+        return Image(
+            imageId=imageId,
+            createdDate=createdDate,
+            updatedDate=updatedDate,
+            format=format,
+            filename=filename,
+            width=width,
+            height=height,
+            area=area,
+        )
