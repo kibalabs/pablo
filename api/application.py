@@ -46,7 +46,12 @@ workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'
 s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
 requester = Requester()
-ipfsRequesters = List[IpfsRequester()]
+ipfsRequesters = [
+    IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs'),
+    IpfsRequester(ipfsPrefix='https://ipfs.infura.io/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://gateway.pinata.cloud/ipfs/'),
+    IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
+]
 manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
 
 app = FastAPI()

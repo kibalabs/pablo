@@ -42,12 +42,6 @@ class IpfsRequester(Requester):
             url = url.replace('ipfs://', self.ipfsPrefix, 1)
         return await super().make_request(method=method, url=url, dataDict=dataDict, data=data, formDataDict=formFiles, formFiles=formFiles, timeout=timeout, headers=headers, outputFilePath=outputFilePath)
 
-IPFS_PROVIDER_PREFIXES = [
-    IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs'),
-    IpfsRequester(ipfsPrefix='https://ipfs.infura.io/ipfs/'),
-    IpfsRequester(ipfsPrefix='https://gateway.pinata.cloud/ipfs/'),
-    IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/')
-]
 
 
 class PabloManager:
@@ -56,7 +50,7 @@ class PabloManager:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
-        self.ipfsRequesters = IPFS_PROVIDER_PREFIXES
+        self.ipfsRequesters = ipfsRequesters
         self.workQueue = workQueue
         self.s3Manager = s3Manager
         self.bucketName = bucketName
