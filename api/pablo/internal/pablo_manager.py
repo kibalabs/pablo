@@ -1,7 +1,10 @@
 import uuid
+from io import BytesIO
 from typing import List
 from typing import Optional
 from typing import Sequence
+from typing import Set
+from typing import Tuple
 
 import magic
 from core import logging
@@ -21,8 +24,10 @@ from PIL import Image as PILImage
 from starlette.responses import Response
 
 from pablo.internal.ipfs_requester import IpfsRequester
+from pablo.internal.messages import ResizeImageMessageContent
 from pablo.internal.model import CLOUDFRONT_URL
-from pablo.internal.model import IMAGE_FORMAT_MAP
+from pablo.internal.model import IMAGE_FORMAT_EXTENSION_MAP
+from pablo.internal.model import IMAGE_FORMAT_PIL_TYPE_MAP
 from pablo.internal.model import Image
 from pablo.internal.model import ImageFormat
 from pablo.internal.model import ImageVariant
@@ -30,6 +35,7 @@ from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
 
+_TARGET_SIZES = [100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
 
 class PabloManager:
 
@@ -102,13 +108,13 @@ class PabloManager:
             resolvedUrl = f'{CLOUDFRONT_URL}/static/ipfs/{cid}'
         response = await self.requester.get(url=resolvedUrl, outputFilePath=localFilePath)
         imageFormat = response.headers.get('content-type')
-        if imageFormat and imageFormat not in IMAGE_FORMAT_MAP:
+        if imageFormat and imageFormat not in IMAGE_FORMAT_EXTENSION_MAP:
             raise BadRequestException(f'Unsupported image format')
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.imagesS3Path}/{imageId}/original', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await file_util.remove_file(filePath=localFilePath)
-        await self.saver.create_url_upload(url=url, imageId=imageId)
         # TODO(krishan711): can we use deferred here?
         await self.save_image(imageId=imageId, imageFormat=imageFormat)
+        await self.saver.create_url_upload(url=url, imageId=imageId)
         return imageId
 
     async def save_image_deferred(self, imageId: str, imageFormat: Optional[str]) -> None:
@@ -123,43 +129,52 @@ class PabloManager:
         if image:
             logging.info(f'Skipping saving image that already exists: {imageId}')
             return
-        localFilePath = f'./tmp/{imageId}/download-for-save'
-        await self.s3Manager.download_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original', filePath=localFilePath)
+        imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         if not imageFormat:
-            imageFormat = magic.from_file(localFilePath)
-        if imageFormat not in IMAGE_FORMAT_MAP:
+            imageFormat = magic.from_buffer(imageContent)
+        if imageFormat not in IMAGE_FORMAT_EXTENSION_MAP:
             raise BadRequestException(f'Unsupported image format')
-        filename = f'original.{IMAGE_FORMAT_MAP[imageFormat]}'
+        filename = f'original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
         width = 0
         height = 0
         if imageFormat != ImageFormat.SVG:
-            with PILImage.open(localFilePath) as pilImage:
+            with PILImage.open(BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
-        await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
-        await file_util.remove_file(filePath=localFilePath)
+        await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
-        # TODO(krishan711): add a task to resize the image if needed
+        await self.resize_image_deferred(imageId=imageId)
 
     async def resize_image_deferred(self, imageId: str) -> None:
-        # TODO(krishan711): implement this
-        pass
+        await self.workQueue.send_message(message=ResizeImageMessageContent(imageId=imageId).to_message())
+
+    @staticmethod
+    def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, width: int, height: int) -> Image:
+        content = BytesIO()
+        if imageFormat in IMAGE_FORMAT_PIL_TYPE_MAP:
+            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+                newPilImage = pilImage.resize(size=(width, height))
+                newPilImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat])
+        else:
+            raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
+        return content.getvalue()
 
     async def resize_image(self, imageId: str) -> None:
-        pass
-    #     image = None
-    #     for targetSize in _TARGET_SIZES:
-    #         if image.size.width >= targetSize:
-    #             # TODO(krishan711): check if the image already exists and skip if it does
-    #             resizedImage = await self._resize_image(image=image, size=ImageSize(width=targetSize, height=targetSize * (image.size.height / image.size.width)))
-    #             resizedFilename = f'./tmp/{uuid.uuid4()}'
-    #             await self._save_image_to_file(image=resizedImage, fileName=resizedFilename)
-    #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/widths/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
-    #         if image.size.height >= targetSize:
-    #             resizedImage = await self._resize_image(image=image, size=ImageSize(width=targetSize * (image.size.width / image.size.height), height=targetSize))
-    #             resizedFilename = f'./tmp/{uuid.uuid4()}'
-    #             await self._save_image_to_file(image=resizedImage, fileName=resizedFilename)
-    #             await self.s3Manager.upload_file(filePath=resizedFilename, targetPath=f'{_BUCKET}/{imageId}/heights/{targetSize}', accessControl='public-read', cacheControl=_CACHE_CONTROL_FINAL_FILE)
-    #     return imageId
+        image = await self.retriever.get_image(imageId=imageId)
+        imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
+        extension = IMAGE_FORMAT_EXTENSION_MAP[image.format]
+        targetSizes: Set[Tuple[int, int]] = set()
+        for targetSize in _TARGET_SIZES:
+            if image.width >= targetSize:
+                targetSizes.add((targetSize, int(targetSize * (image.height / image.width))))
+            if image.height >= targetSize:
+                targetSizes.add((int(targetSize * (image.width / image.height)), targetSize))
+        for targetWidth, targetHeight in targetSizes:
+            # TODO(krishan711): check if the variant already exists
+            logging.info(f'Resizing to ({targetWidth}, {targetHeight})')
+            resizedImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=image.format, width=targetWidth, height=targetHeight)
+            variantFileName = f'{targetWidth}-{targetHeight}.{extension}'
+            await self.s3Manager.write_file(content=resizedImageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{variantFileName}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
+            await self.saver.create_image_variant(imageId=imageId, filename=variantFileName, width=targetWidth, height=targetHeight, area=(targetWidth * targetHeight))
 
     async def get_ipfs_head(self, cid: str) -> Response:
         try:

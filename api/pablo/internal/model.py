@@ -11,13 +11,18 @@ class ImageFormat:
     SVG = "image/svg+xml"
 
 
-IMAGE_FORMAT_MAP = {
+IMAGE_FORMAT_EXTENSION_MAP = {
     ImageFormat.JPG: 'jpg',
     ImageFormat.PNG: 'png',
     ImageFormat.WEBP: 'webp',
     ImageFormat.SVG: 'svg',
 }
 
+IMAGE_FORMAT_PIL_TYPE_MAP = {
+    ImageFormat.JPG: 'JPEG',
+    ImageFormat.PNG: 'PNG',
+    ImageFormat.WEBP: 'WEBP',
+}
 
 @dataclasses.dataclass
 class ImageData:
