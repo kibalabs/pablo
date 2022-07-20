@@ -162,13 +162,15 @@ class PabloManager:
         image = await self.retriever.get_image(imageId=imageId)
         imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         extension = IMAGE_FORMAT_EXTENSION_MAP[image.format]
+        imageVariants = await self.list_image_variants(imageId=imageId)
+        existingSizes = set([(imageVariant.width, imageVariant.height) for imageVariant in imageVariants])
         targetSizes: Set[Tuple[int, int]] = set()
         for targetSize in _TARGET_SIZES:
             if image.width >= targetSize:
                 targetSizes.add((targetSize, int(targetSize * (image.height / image.width))))
             if image.height >= targetSize:
                 targetSizes.add((int(targetSize * (image.width / image.height)), targetSize))
-        for targetWidth, targetHeight in targetSizes:
+        for targetWidth, targetHeight in (targetSizes - existingSizes):
             # TODO(krishan711): check if the variant already exists
             logging.info(f'Resizing to ({targetWidth}, {targetHeight})')
             resizedImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=image.format, width=targetWidth, height=targetHeight)

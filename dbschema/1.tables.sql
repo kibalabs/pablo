@@ -20,7 +20,9 @@ CREATE TABLE tbl_image_variants (
     height INTEGER NOT NULL,
     area INTEGER NOT NULL
 );
+CREATE UNIQUE INDEX tbl_image_variants_image_id_width_height ON tbl_image_variants (image_id, width, height);
 CREATE INDEX tbl_image_variants_updated_date ON tbl_image_variants (updated_date);
+CREATE INDEX tbl_image_variants_image_id_area_width_height ON tbl_image_variants (image_id, area, width, height);
 CREATE INDEX tbl_image_variants_image_id_area ON tbl_image_variants (image_id, area);
 CREATE INDEX tbl_image_variants_image_id ON tbl_image_variants (image_id);
 CREATE INDEX tbl_image_variants_area ON tbl_image_variants (area);
