@@ -4,20 +4,21 @@ import os
 import time
 
 from core import logging
-from core.queues.message_queue_processor import MessageQueueProcessor
 from core.http.basic_authentication import BasicAuthentication
+from core.queues.message_queue_processor import MessageQueueProcessor
 from core.queues.sqs_message_queue import SqsMessageQueue
 from core.requester import Requester
 from core.s3_manager import S3Manager
+from core.slack_client import SlackClient
 from core.store.database import Database
 from core.util.value_holder import RequestIdHolder
-from core.slack_client import SlackClient
 
 from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.pablo_manager import PabloManager
 from pablo.internal.pablo_message_processor import PabloMessageProcessor
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
+
 
 async def main():
     requestIdHolder = RequestIdHolder()
