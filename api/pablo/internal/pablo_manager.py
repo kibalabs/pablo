@@ -152,8 +152,7 @@ class PabloManager:
     def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, width: int, height: int) -> Image:
         content = BytesIO()
         if imageFormat in IMAGE_FORMAT_PIL_TYPE_MAP:
-            imageContentBuffer = BytesIO(imageContent)
-            with PILImage.open(fp=imageContentBuffer) as pilImage:
+            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
                 newPilImage = pilImage.resize(size=(width, height))
                 newPilImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat])
         else:
