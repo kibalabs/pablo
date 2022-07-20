@@ -18,7 +18,7 @@ ImagesTable = sqlalchemy.Table(
 ImageVariantsTable = sqlalchemy.Table(
     'tbl_image_variants',
     metadata,
-    sqlalchemy.Column(key='imageVariantId', name='id', type_=sqlalchemy.Text, primary_key=True, nullable=False),
+    sqlalchemy.Column(key='imageVariantId', name='id', type_=sqlalchemy.Integer, autoincrement=True, primary_key=True, nullable=False),
     sqlalchemy.Column(key='createdDate', name='created_date', type_=sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column(key='updatedDate', name='updated_date', type_=sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column(key='imageId', name='image_id', type_=sqlalchemy.Text, nullable=False),
@@ -31,7 +31,7 @@ ImageVariantsTable = sqlalchemy.Table(
 UrlUploadsTable = sqlalchemy.Table(
     'tbl_url_uploads',
     metadata,
-    sqlalchemy.Column(key='urlUploadId', name='id', type_=sqlalchemy.Text, primary_key=True, nullable=False),
+    sqlalchemy.Column(key='urlUploadId', name='id', type_=sqlalchemy.Integer, autoincrement=True, primary_key=True, nullable=False),
     sqlalchemy.Column(key='createdDate', name='created_date', type_=sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column(key='updatedDate', name='updated_date', type_=sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column(key='url', name='url', type_=sqlalchemy.Text, nullable=False),

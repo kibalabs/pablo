@@ -1,16 +1,21 @@
 import dataclasses
 import datetime
 
+CLOUDFRONT_URL = 'https://d35ci2i0uce4j6.cloudfront.net'
+
 
 class ImageFormat:
     JPG = "image/jpg"
     PNG = "image/png"
     WEBP = "image/webp"
+    SVG = "image/svg+xml"
+
 
 IMAGE_FORMAT_MAP = {
     ImageFormat.JPG: 'jpg',
     ImageFormat.PNG: 'png',
     ImageFormat.WEBP: 'webp',
+    ImageFormat.SVG: 'svg',
 }
 
 

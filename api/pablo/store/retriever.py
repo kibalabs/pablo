@@ -28,8 +28,8 @@ class Retriever(CoreRetriever):
             query = self._apply_orders(query=query, table=ImagesTable, orders=orders)
         if limit:
             query = query.limit(limit)
-        rows = await self.database.fetch_all(query=query, connection=connection)
-        images = [image_from_row(row) for row in rows]
+        result = await self.database.execute(query=query, connection=connection)
+        images = [image_from_row(row) for row in result]
         return images
 
     async def get_image(self, imageId: str, connection: Optional[DatabaseConnection] = None) -> Image:
@@ -49,8 +49,8 @@ class Retriever(CoreRetriever):
             query = self._apply_orders(query=query, table=ImageVariantsTable, orders=orders)
         if limit:
             query = query.limit(limit)
-        rows = await self.database.fetch_all(query=query, connection=connection)
-        imageVariants = [image_variant_from_row(row) for row in rows]
+        result = await self.database.execute(query=query, connection=connection)
+        imageVariants = [image_variant_from_row(row) for row in result]
         return imageVariants
 
     async def get_image_variant(self, imageVariantId: str, connection: Optional[DatabaseConnection] = None) -> Image:
@@ -70,8 +70,8 @@ class Retriever(CoreRetriever):
             query = self._apply_orders(query=query, table=UrlUploadsTable, orders=orders)
         if limit:
             query = query.limit(limit)
-        rows = await self.database.fetch_all(query=query, connection=connection)
-        urlUploads = [url_upload_from_row(row) for row in rows]
+        result = await self.database.execute(query=query, connection=connection)
+        urlUploads = [url_upload_from_row(row) for row in result]
         return urlUploads
 
     async def get_url_upload(self, urlUploadId: str, connection: Optional[DatabaseConnection] = None) -> Image:

@@ -11,7 +11,7 @@ CREATE TABLE tbl_images (
 CREATE INDEX tbl_images_updated_date ON tbl_images (updated_date);
 
 CREATE TABLE tbl_image_variants (
-    id TEXT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     created_date TIMESTAMP NOT NULL,
     updated_date TIMESTAMP NOT NULL,
     image_id TEXT NOT NULL,
