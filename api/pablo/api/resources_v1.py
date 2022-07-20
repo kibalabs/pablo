@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 from pablo.internal.model import Image
@@ -22,6 +20,7 @@ class ApiImage(BaseModel):
             url=model.url,
         )
 
+
 class ApiImageVariant(BaseModel):
     imageId: str
     variantId: str
@@ -41,6 +40,7 @@ class ApiImageVariant(BaseModel):
             url=model.url,
         )
 
+
 # class ApiPresignedUpload(BaseModel):
 #     url: str
 #     params: Dict[str, str]
@@ -51,39 +51,3 @@ class ApiImageVariant(BaseModel):
 #             url=presignedUpload.url,
 #             params={field.name: field.value for field in presignedUpload.fields},
 #         )
-
-class ListImagesRequest(BaseModel):
-    pass
-
-class ListImagesResponse(BaseModel):
-    images: List[ApiImage]
-
-class GetImageRequest(BaseModel):
-    pass
-
-class GetImageResponse(BaseModel):
-    image: ApiImage
-
-class ListImageVariantsRequest(BaseModel):
-    pass
-
-class ListImageVariantsResponse(BaseModel):
-    imageVariants: List[ApiImageVariant]
-
-class GetImageVariantRequest(BaseModel):
-    pass
-
-class GetImageVariantResponse(BaseModel):
-    imageVariant: ApiImageVariant
-
-# class GenerateImageUploadRequest(BaseModel):
-#     filename: str
-
-# class GenerateImageUploadResponse(BaseModel):
-#     presignedUpload: ApiPresignedUpload
-
-class UploadImageUrlRequest(BaseModel):
-    url: str
-
-class UploadImageUrlResponse(BaseModel):
-    imageId: str
