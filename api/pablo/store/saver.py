@@ -5,8 +5,10 @@ from core.store.saver import Saver as CoreSaver
 from core.util import date_util
 
 from pablo.internal.model import Image
+from pablo.internal.model import ImageVariant
 from pablo.internal.model import UrlUpload
 from pablo.store.schema import ImagesTable
+from pablo.store.schema import ImageVariantsTable
 from pablo.store.schema import UrlUploadsTable
 
 
@@ -32,6 +34,32 @@ class Saver(CoreSaver):
             createdDate=createdDate,
             updatedDate=updatedDate,
             format=format,
+            filename=filename,
+            width=width,
+            height=height,
+            area=area,
+        )
+
+    async def create_image_variant(self, imageId: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> ImageVariant:  # pylint: disable=redefined-builtin
+        createdDate = date_util.datetime_from_now()
+        updatedDate = createdDate
+        values = {
+            ImageVariantsTable.c.createdDate.key: createdDate,
+            ImageVariantsTable.c.updatedDate.key: updatedDate,
+            ImageVariantsTable.c.imageId.key: imageId,
+            ImageVariantsTable.c.filename.key: filename,
+            ImageVariantsTable.c.width.key: width,
+            ImageVariantsTable.c.height.key: height,
+            ImageVariantsTable.c.area.key: area,
+        }
+        query = ImageVariantsTable.insert().values(values)
+        result = await self._execute(query=query, connection=connection)
+        imageVariantId = result.inserted_primary_key[0]
+        return ImageVariant(
+            imageVariantId=imageVariantId,
+            createdDate=createdDate,
+            updatedDate=updatedDate,
+            imageId=imageId,
             filename=filename,
             width=width,
             height=height,
