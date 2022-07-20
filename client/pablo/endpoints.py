@@ -2,8 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from pablo.api.resources_v1 import ApiImage
-from pablo.api.resources_v1 import ApiImageVariant
+from pablo.resources import ApiImage
+from pablo.resources import ApiImageVariant
 
 
 class ListImagesRequest(BaseModel):
