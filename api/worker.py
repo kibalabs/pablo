@@ -14,6 +14,7 @@ from core.store.database import Database
 from core.util.value_holder import RequestIdHolder
 
 from pablo.internal.ipfs_requester import IpfsRequester
+from pablo.internal.model import CLOUDFRONT_URL
 from pablo.internal.pablo_manager import PabloManager
 from pablo.internal.pablo_message_processor import PabloMessageProcessor
 from pablo.store.retriever import Retriever
@@ -26,6 +27,7 @@ async def main():
     version = os.environ.get('VERSION', 'local')
     environment = os.environ.get('ENV', 'dev')
     isRunningDebugMode = environment == 'dev'
+    servingUrl = os.environ.get('SERVING_URL', CLOUDFRONT_URL)
 
     if isRunningDebugMode:
         logging.init_basic_logging()
@@ -41,7 +43,7 @@ async def main():
     s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
     requester = Requester()
-    infuraIpfsAuth = BasicAuthentication(username='INFURA_IPFS_ID', password=os.environ["INFURA_IPFS_SECRET"])
+    infuraIpfsAuth = BasicAuthentication(username=os.environ['INFURA_IPFS_ID'], password=os.environ["INFURA_IPFS_SECRET"])
     ipfsRequesters = [
         IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
         IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),

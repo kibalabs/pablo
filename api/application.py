@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pablo.api.api_v1 import create_api as create_v1_api
 from pablo.api.static import create_api as create_static_api
 from pablo.internal.ipfs_requester import IpfsRequester
+from pablo.internal.model import CLOUDFRONT_URL
 from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
@@ -28,6 +29,7 @@ name = os.environ.get('NAME', 'pablo-api')
 version = os.environ.get('VERSION', 'local')
 environment = os.environ.get('ENV', 'dev')
 isRunningDebugMode = environment == 'dev'
+servingUrl = os.environ.get('SERVING_URL', CLOUDFRONT_URL)
 
 if isRunningDebugMode:
     logging.init_basic_logging()
@@ -43,13 +45,13 @@ workQueue = SqsMessageQueue(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'
 s3Manager = S3Manager(region='eu-west-1', accessKeyId=os.environ['AWS_KEY'], accessKeySecret=os.environ['AWS_SECRET'])
 
 requester = Requester()
-infuraIpfsAuth = BasicAuthentication(username='INFURA_IPFS_ID', password=os.environ["INFURA_IPFS_SECRET"])
+infuraIpfsAuth = BasicAuthentication(username=os.environ['INFURA_IPFS_ID'], password=os.environ["INFURA_IPFS_SECRET"])
 ipfsRequesters = [
     IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
     IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
     IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
 ]
-manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
+manager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=servingUrl)
 
 app = FastAPI()
 app.include_router(router=create_health_api(name=name, version=version, environment=environment))

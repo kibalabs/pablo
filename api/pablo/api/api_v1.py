@@ -3,13 +3,13 @@ from typing import Optional
 from fastapi import APIRouter
 from starlette.responses import Response
 
-from pablo.api.resources_v1 import ApiImage
-from pablo.api.resources_v1 import ApiImageVariant
 from pablo.api.endpoints_v1 import GetImageResponse
 from pablo.api.endpoints_v1 import GetImageVariantResponse
 from pablo.api.endpoints_v1 import ListImageVariantsResponse
 from pablo.api.endpoints_v1 import UploadImageUrlRequest
 from pablo.api.endpoints_v1 import UploadImageUrlResponse
+from pablo.api.resources_v1 import ApiImage
+from pablo.api.resources_v1 import ApiImageVariant
 from pablo.internal.pablo_manager import PabloManager
 
 
