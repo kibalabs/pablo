@@ -54,10 +54,6 @@ class PabloManager:
         self.ipfsServingUrl = f'{servingUrl}/static/ipfs'
         self.imagesServingUrl = f'{servingUrl}/static/images'
 
-    async def download_s3_file(self, sourcePath: str, filePath: str) -> None:
-        await file_util.create_directory(directory=os.path.dirname(filePath), shouldAllowExisting=True)
-        await self.s3Manager.download_file(sourcePath=sourcePath, filePath=filePath)
-
     # async def list_images(self) -> Sequence[Image]:
     #     pass
 
@@ -117,9 +113,9 @@ class PabloManager:
             raise BadRequestException(f'Unsupported image format')
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.imagesS3Path}/{imageId}/original', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await file_util.remove_file(filePath=localFilePath)
-        await self.saver.create_url_upload(url=url, imageId=imageId)
         # TODO(krishan711): can we use deferred here?
         await self.save_image(imageId=imageId, imageFormat=imageFormat)
+        await self.saver.create_url_upload(url=url, imageId=imageId)
         return imageId
 
     async def save_image_deferred(self, imageId: str, imageFormat: Optional[str]) -> None:
@@ -143,7 +139,7 @@ class PabloManager:
         width = 0
         height = 0
         if imageFormat != ImageFormat.SVG:
-            with PILImage.open(imageContent) as pilImage:
+            with PILImage.open(BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
         await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
