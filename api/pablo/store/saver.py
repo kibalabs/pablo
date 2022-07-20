@@ -4,8 +4,8 @@ from core.store.database import DatabaseConnection
 from core.store.saver import Saver as CoreSaver
 from core.util import date_util
 
-from pablo.internal.model import Image
-from pablo.store.schema import ImagesTable
+from pablo.internal.model import Image, UrlUpload
+from pablo.store.schema import ImagesTable, UrlUploadsTable
 
 
 class Saver(CoreSaver):
@@ -34,4 +34,24 @@ class Saver(CoreSaver):
             width=width,
             height=height,
             area=area,
+        )
+
+    async def create_url_upload(self, url: str, imageId: str, connection: Optional[DatabaseConnection] = None) -> UrlUpload:  # pylint: disable=redefined-builtin
+        createdDate = date_util.datetime_from_now()
+        updatedDate = createdDate
+        values = {
+            UrlUploadsTable.c.createdDate.key: createdDate,
+            UrlUploadsTable.c.updatedDate.key: updatedDate,
+            UrlUploadsTable.c.url.key: url,
+            UrlUploadsTable.c.imageId.key: imageId,
+        }
+        query = UrlUploadsTable.insert().values(values)
+        result = await self._execute(query=query, connection=connection)
+        urlUploadId = result.inserted_primary_key[0]
+        return UrlUpload(
+            urlUploadId=urlUploadId,
+            createdDate=createdDate,
+            updatedDate=updatedDate,
+            url=url,
+            imageId=imageId,
         )

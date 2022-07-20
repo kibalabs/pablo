@@ -1,7 +1,9 @@
 from typing import List
 from typing import Optional
 from typing import Sequence
+import uuid
 
+import magic
 from core import logging
 from core.exceptions import BadRequestException
 from core.exceptions import NotFoundException
@@ -16,9 +18,10 @@ from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
 from starlette.responses import Response
+from PIL import Image as PILImage
 
 from pablo.internal.ipfs_requester import IpfsRequester
-from pablo.internal.model import IMAGE_FORMAT_MAP
+from pablo.internal.model import CLOUDFRONT_URL, IMAGE_FORMAT_MAP, ImageFormat
 from pablo.internal.model import Image
 from pablo.internal.model import ImageVariant
 from pablo.store.retriever import Retriever
@@ -62,6 +65,7 @@ class PabloManager:
         return image
 
     async def go_to_image(self, imageId: str, width: Optional[int] = None, height: Optional[int] = None) -> str:
+        image = await self.retriever.get_image(imageId=imageId)
         filters = [StringFieldFilter(fieldName=ImageVariantsTable.c.imageId.key, eq=imageId)]
         if width is not None:
             filters.append(IntegerFieldFilter(fieldName=ImageVariantsTable.c.width.key, gte=width))
@@ -73,9 +77,8 @@ class PabloManager:
             limit=1
         )
         if len(imageVariants) == 0:
-            raise NotFoundException(message=f'Image {imageId} not found')
-        # TODO(krishan711): this should return the original in the case where nothing else is found
-        raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageVariants[0].imageId}/{imageVariants[0].filename}')
+            raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
+        raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{imageVariants[0].filename}')
 
     # async def generate_image_upload(self, filename: str) -> S3PresignedUpload:
     #     presignedUpload = await self.s3Manager.generate_presigned_upload(target=f's3://{self.bucketName}/uploads/${{{filename}}}', timeLimit=60, sizeLimit=file_util.MEGABYTE * 10, accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
@@ -88,10 +91,14 @@ class PabloManager:
             urlUpload = None
         if urlUpload:
             return urlUpload.imageId
-        imageId = 'test' #str(uuid.uuid4()).replace('-', '')
-        # TODO(krishan711): use load_ipfs for ipfs urls
+        imageId = str(uuid.uuid4()).replace('-', '')
         localFilePath = f'./tmp/{imageId}/download-for-upload'
-        response = await self.requester.get(url=url, outputFilePath=localFilePath)
+        resolvedUrl = url
+        if url.startswith('ipfs://'):
+            cid = url.replace('ipfs://', '')
+            await self.load_ipfs(cid=cid)
+            resolvedUrl = f'{CLOUDFRONT_URL}/static/ipfs/{cid}'
+        response = await self.requester.get(url=resolvedUrl, outputFilePath=localFilePath)
         imageFormat = response.headers.get('content-type')
         if imageFormat and imageFormat not in IMAGE_FORMAT_MAP:
             raise BadRequestException(f'Unsupported image format')
@@ -116,17 +123,20 @@ class PabloManager:
             return
         localFilePath = f'./tmp/{imageId}/download-for-save'
         await self.s3Manager.download_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original', filePath=localFilePath)
-        # TODO(krishan711): get the image format
         if not imageFormat:
-            imageFormat = 'xyz'
+            imageFormat = magic.from_file(localFilePath)
+        if imageFormat not in IMAGE_FORMAT_MAP:
+            raise BadRequestException(f'Unsupported image format')
         filename = f'original.{IMAGE_FORMAT_MAP[imageFormat]}'
-        # TODO(krishan711): get the image size
         width = 0
         height = 0
-        await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
+        if imageFormat != ImageFormat.SVG:
+            with PILImage.open(localFilePath) as pilImage:
+                width, height = pilImage.size
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await file_util.remove_file(filePath=localFilePath)
-        # TODO(krishan711): add a task to resize the image
+        await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
+        # TODO(krishan711): add a task to resize the image if needed
 
     async def resize_image_deferred(self, imageId: str) -> None:
         # TODO(krishan711): implement this
