@@ -1,6 +1,6 @@
 name: Deploy
 on:
-  push:
+  pull_request:
     branches: [main]
 jobs:
   deploy-api:
@@ -19,36 +19,37 @@ jobs:
         run: docker build --tag $DOCKER_IMAGE .
       - name: Push to container registry
         run: docker push $DOCKER_IMAGE
-  # run-worker:
-  #   needs: deploy-api
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     NAME: pablo-worker
-  #     VERSION: ${{ github.sha }}
-  #     DOCKER_IMAGE: ghcr.io/${{ github.repository }}-api:latest
-  #   steps:
-  #     - name: executing remote ssh commands
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.WORKERBOX_URL }}
-  #         username: ${{ secrets.WORKERBOX_USER }}
-  #         key: ${{ secrets.WORKERBOX_SSH_KEY }}
-  #         port: ${{ secrets.WORKERBOX_PORT }}
-  #         envs: DOCKER_IMAGE,NAME,VERSION
-  #         script_stop: true
-  #         script: |
-  #           varsFile=~/.${NAME}.vars
-  #           docker pull ${DOCKER_IMAGE}
-  #           docker stop ${NAME} && docker rm ${NAME} || true
-  #           docker run \
-  #             --name ${NAME} \
-  #             --detach \
-  #             --publish-all \
-  #             --restart on-failure \
-  #             --env NAME=${NAME} \
-  #             --env VERSION=${VERSION} \
-  #             --env-file ${varsFile} \
-  #             ${DOCKER_IMAGE} './start-worker.sh'
+  run-worker:
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    env:
+      NAME: pablo-worker
+      VERSION: ${{ github.sha }}
+      DOCKER_IMAGE: ghcr.io/${{ github.repository }}-api:latest
+    steps:
+      - name: executing remote ssh commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.WORKERBOX_URL }}
+          username: ${{ secrets.WORKERBOX_USER }}
+          key: ${{ secrets.WORKERBOX_SSH_KEY }}
+          port: ${{ secrets.WORKERBOX_PORT }}
+          envs: DOCKER_IMAGE,NAME,VERSION
+          script_stop: true
+          script: |
+            varsFile=~/.${NAME}.vars
+            docker pull ${DOCKER_IMAGE}
+            docker stop ${NAME} && docker rm ${NAME} || true
+            docker run \
+              --name ${NAME} \
+              --detach \
+              --publish-all \
+              --restart on-failure \
+              --memory 768m \
+              --env NAME=${NAME} \
+              --env VERSION=${VERSION} \
+              --env-file ${varsFile} \
+              ${DOCKER_IMAGE} './start-worker.sh'
   run-api:
     needs: deploy-api
     runs-on: ubuntu-latest

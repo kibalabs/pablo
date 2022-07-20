@@ -1,6 +1,6 @@
 from core.queues.model import MessageContent
 
 
-class LoadIpfsMessageContent(MessageContent):
-    _COMMAND = 'LOAD_IPFS'
-    cid: str
+class ResizeImageMessageContent(MessageContent):
+    _COMMAND = 'RESIZE_IMAGE'
+    imageId: str
