@@ -48,7 +48,6 @@ def create_api(manager: PabloManager) -> APIRouter():
     @router.post('/upload-image-url', response_model=UploadImageUrlResponse)
     async def upload_image_url(request: UploadImageUrlRequest):
         image = await manager.upload_image_url(url=request.url)
-        print('image', image)
         return UploadImageUrlResponse(image=ApiImage.from_model(model=image))
 
     # TODO(krishan711): how can this be kiba-ified
