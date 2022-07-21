@@ -49,3 +49,34 @@ jobs:
           json-file-path: ./client/linting-results.json
           check-name: lint-client
           fail-on-error: false
+  deploy-client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+    env:
+      DOCKER_IMAGE: package
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Build docker image
+        run: docker build --tag $DOCKER_IMAGE .
+      - name: Get package details
+        id: package_vars
+        run: |
+          echo ::set-output name=version::$(docker run --rm $DOCKER_IMAGE python setup.py --version)
+          echo ::set-output name=name::$(docker run --rm $DOCKER_IMAGE python setup.py --name)
+      - name: Check if already published
+        id: check
+        run: |
+          echo ${{ steps.package_vars.outputs.name }} ${{ steps.package_vars.outputs.version }}
+      - name: Create .pypirc file
+        run: echo -e "[pypi]\nusername=__token__\npassword=$PYPI_TOKEN" > .pypirc
+      # - name: Publish next package to pypi
+      #   if: steps.package_vars.outputs.commit_count != '0'
+      #     docker run -v $(pwd)/.pypirc:/root/.pypirc $DOCKER_IMAGE /bin/bash -c " \
+      #       version --part dev --count ${{ steps.package_vars.outputs.commit_count }} \
+      #       && python setup.py bdist_wheel \
+      #       && twine upload --non-interactive --disable-progress-bar dist/* \
+      #     "
