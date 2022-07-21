@@ -64,11 +64,12 @@ jobs:
         run: docker build --tag $DOCKER_IMAGE .
       - name: Check if already published
         id: check
+        continue-on-error: true
         run: |
           version=$(docker run --rm $DOCKER_IMAGE python setup.py --version)
           name=$(docker run --rm $DOCKER_IMAGE python setup.py --name)
           docker run --rm $DOCKER_IMAGE pip install ${version}==${name}
-          echo ::set-output name=exists::$(if [ $? -ne 0 ]; echo 0; else echo 1; fi)
+          echo ::set-output name=exists::$(if [ $? -eq 0 ]; then echo 1; else echo 0; fi)
       - name: Create .pypirc file
         if: steps.check.outputs.exists != '1'
         run: echo -e "[pypi]\nusername=__token__\npassword=$PYPI_TOKEN" > .pypirc
@@ -80,3 +81,11 @@ jobs:
       #       && python setup.py bdist_wheel \
       #       && twine upload --non-interactive --disable-progress-bar dist/* \
       #     "
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: steps.check.outputs.exists != '1'
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
