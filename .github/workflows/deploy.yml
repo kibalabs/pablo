@@ -48,7 +48,7 @@ jobs:
         if: steps.check.outputs.exists != '1'
         run: |
           docker run -v $(pwd)/.pypirc:/root/.pypirc $DOCKER_IMAGE /bin/bash -c " \
-            && python setup.py bdist_wheel \
+            python setup.py bdist_wheel \
             && twine upload --non-interactive --disable-progress-bar dist/* \
           "
       - name: Create Release
