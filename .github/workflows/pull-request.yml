@@ -70,11 +70,14 @@ jobs:
       - name: Check if already published
         id: check
         run: |
-          echo ${{ steps.package_vars.outputs.name }} ${{ steps.package_vars.outputs.version }}
+          docker run --rm pabloclient pip install ${{ steps.package_vars.outputs.name }}==${{ steps.package_vars.outputs.version }}
+          echo ::set-output name=exists::$(if [ $? -ne 0 ]; echo 0; else echo 1; fi)
       - name: Create .pypirc file
+        if: steps.check.outputs.exists != '1'
         run: echo -e "[pypi]\nusername=__token__\npassword=$PYPI_TOKEN" > .pypirc
-      # - name: Publish next package to pypi
-      #   if: steps.package_vars.outputs.commit_count != '0'
+      # - name: Publish package to pypi
+      #   if: steps.check.outputs.exists != '1'
+      #   run: |
       #     docker run -v $(pwd)/.pypirc:/root/.pypirc $DOCKER_IMAGE /bin/bash -c " \
       #       version --part dev --count ${{ steps.package_vars.outputs.commit_count }} \
       #       && python setup.py bdist_wheel \
