@@ -9,6 +9,8 @@ from pablo.internal.pablo_manager import PabloManager
 def create_api(manager: PabloManager) -> APIRouter():  # pylint: disable=unused-argument
     router = APIRouter()
 
+    # TODO(krishan711): these would be better using servingUrl instead of hard-coding
+
     @router.get('/images/{imagePath:path}')
     async def go_to_image(imagePath: str):
         raise FoundRedirectException(location=f'{CLOUDFRONT_URL}/static/images/{imagePath}')

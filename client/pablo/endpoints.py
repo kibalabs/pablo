@@ -40,4 +40,4 @@ class UploadImageUrlRequest(BaseModel):
     url: str
 
 class UploadImageUrlResponse(BaseModel):
-    imageId: str
+    image: ApiImage

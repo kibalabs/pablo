@@ -7,6 +7,7 @@ class ApiImage(BaseModel):
     height: int
     format: str
     url: str
+    resizableUrl: str
 
 
 class ApiImageVariant(BaseModel):
@@ -14,5 +15,3 @@ class ApiImageVariant(BaseModel):
     variantId: str
     width: int
     height: int
-    format: str
-    url: str
