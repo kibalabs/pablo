@@ -72,8 +72,10 @@ class PabloManager:
             raise NotFoundException()
         return image
 
-    async def go_to_image(self, imageId: str, width: Optional[int] = None, height: Optional[int] = None) -> str:
+    async def go_to_image(self, imageId: str, width: Optional[int] = None, height: Optional[int] = None, original: Optional[bool] = None) -> str:
         image = await self.retriever.get_image(imageId=imageId)
+        if original:
+            raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
         filters = [StringFieldFilter(fieldName=ImageVariantsTable.c.imageId.key, eq=imageId)]
         if width is not None:
             filters.append(IntegerFieldFilter(fieldName=ImageVariantsTable.c.width.key, gte=width))
@@ -84,21 +86,22 @@ class PabloManager:
             orders=[Order(fieldName=ImageVariantsTable.c.area.key, direction=Direction.ASCENDING)],
             limit=1
         )
-        if len(imageVariants) == 0:
-            raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
-        raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{imageVariants[0].filename}')
+        if len(imageVariants) > 0:
+            raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{imageVariants[0].filename}')
+        raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
 
     # async def generate_image_upload(self, filename: str) -> S3PresignedUpload:
     #     presignedUpload = await self.s3Manager.generate_presigned_upload(target=f's3://{self.bucketName}/uploads/${{{filename}}}', timeLimit=60, sizeLimit=file_util.MEGABYTE * 10, accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
     #     return presignedUpload
 
-    async def upload_image_url(self, url: str) -> str:
+    async def upload_image_url(self, url: str) -> Image:
         try:
             urlUpload = await self.retriever.get_url_upload_by_url(url=url)
         except NotFoundException:
             urlUpload = None
         if urlUpload:
-            return urlUpload.imageId
+            image = await self.get_image(imageId=urlUpload.imageId)
+            return image
         imageId = str(uuid.uuid4()).replace('-', '')
         localFilePath = f'./tmp/{imageId}/download-for-upload'
         resolvedUrl = url
@@ -112,16 +115,11 @@ class PabloManager:
             raise BadRequestException(f'Unsupported image format')
         await self.s3Manager.upload_file(filePath=localFilePath, targetPath=f'{self.imagesS3Path}/{imageId}/original', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         await file_util.remove_file(filePath=localFilePath)
-        # TODO(krishan711): can we use deferred here?
-        await self.save_image(imageId=imageId, imageFormat=imageFormat)
+        image = await self.save_image(imageId=imageId, imageFormat=imageFormat)
         await self.saver.create_url_upload(url=url, imageId=imageId)
-        return imageId
+        return image
 
-    async def save_image_deferred(self, imageId: str, imageFormat: Optional[str]) -> None:
-        # TODO(krishan711): implement this
-        pass
-
-    async def save_image(self, imageId: str, imageFormat: Optional[str]) -> None:
+    async def save_image(self, imageId: str, imageFormat: Optional[str]) -> Image:
         try:
             image = await self.retriever.get_image(imageId=imageId)
         except NotFoundException:
@@ -141,8 +139,9 @@ class PabloManager:
             with PILImage.open(BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
         await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
-        await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
+        image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
         await self.resize_image_deferred(imageId=imageId)
+        return image
 
     async def resize_image_deferred(self, imageId: str) -> None:
         await self.workQueue.send_message(message=ResizeImageMessageContent(imageId=imageId).to_message())

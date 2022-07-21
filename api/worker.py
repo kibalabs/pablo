@@ -47,9 +47,9 @@ async def main():
     ipfsRequesters = [
         IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
         IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
-        IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
+        # IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
     ]
-    pabloManager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=os.environ['SERVING_URL'])
+    pabloManager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=servingUrl)
 
     processor = PabloMessageProcessor(pabloManager=pabloManager)
     slackClient = SlackClient(webhookUrl=os.environ['SLACK_WEBHOOK_URL'], requester=requester, defaultSender='worker', defaultChannel='notd-notifications')

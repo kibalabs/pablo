@@ -19,6 +19,46 @@ jobs:
         run: docker build --tag $DOCKER_IMAGE .
       - name: Push to container registry
         run: docker push $DOCKER_IMAGE
+  deploy-client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+    env:
+      DOCKER_IMAGE: package
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Build docker image
+        run: docker build --tag $DOCKER_IMAGE .
+      - name: Check if already published
+        id: check
+        continue-on-error: true
+        run: |
+          version=$(docker run --rm $DOCKER_IMAGE python setup.py --version)
+          name=$(docker run --rm $DOCKER_IMAGE python setup.py --name)
+          docker run --rm $DOCKER_IMAGE pip install ${version}==${name}
+          echo ::set-output name=exists::$(if [ $? -eq 0 ]; then echo 1; else echo 0; fi)
+          echo ::set-output name=version::$(echo "v$version")
+      - name: Create .pypirc file
+        if: steps.check.outputs.exists != '1'
+        run: echo -e "[pypi]\nusername=__token__\npassword=$PYPI_TOKEN" > .pypirc
+      - name: Publish package to pypi
+        if: steps.check.outputs.exists != '1'
+        run: |
+          docker run -v $(pwd)/.pypirc:/root/.pypirc $DOCKER_IMAGE /bin/bash -c " \
+            && python setup.py bdist_wheel \
+            && twine upload --non-interactive --disable-progress-bar dist/* \
+          "
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: steps.check.outputs.exists != '1'
+        with:
+          tag_name: client-${{ steps.check.outputs.version }}
+          release_name: Client ${{ steps.check.outputs.version }}
+          draft: false
+          prerelease: false
   run-worker:
     needs: deploy-api
     runs-on: ubuntu-latest

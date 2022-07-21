@@ -37,8 +37,8 @@ def create_api(manager: PabloManager) -> APIRouter():
         return GetImageVariantResponse(imageVariant=ApiImageVariant.from_model(model=imageVariant))
 
     @router.get('/images/{imageId}/go')
-    async def go_to_image(imageId: str, w: Optional[int] = None, h: Optional[int] = None):  # pylint: disable=invalid-name
-        await manager.go_to_image(imageId=imageId, width=w, height=h)
+    async def go_to_image(imageId: str, w: Optional[int] = None, h: Optional[int] = None, original: Optional[str] = None):  # pylint: disable=invalid-name
+        await manager.go_to_image(imageId=imageId, width=w, height=h, original=bool(original))
 
     # @router.post('/generate-image-upload', response_model=GenerateImageUploadResponse)
     # async def generate_image_upload(request: GenerateImageUploadRequest):
@@ -47,8 +47,8 @@ def create_api(manager: PabloManager) -> APIRouter():
 
     @router.post('/upload-image-url', response_model=UploadImageUrlResponse)
     async def upload_image_url(request: UploadImageUrlRequest):
-        imageId = await manager.upload_image_url(url=request.url)
-        return UploadImageUrlResponse(imageId=imageId)
+        image = await manager.upload_image_url(url=request.url)
+        return UploadImageUrlResponse(image=ApiImage.from_model(model=image))
 
     # TODO(krishan711): how can this be kiba-ified
     @router.get('/ipfs/{cid:path}')

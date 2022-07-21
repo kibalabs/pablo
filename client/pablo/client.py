@@ -43,9 +43,9 @@ class PabloClient(ServiceClient):
         response = await self.make_request(method=method, path=path, request=request, responseClass=GetImageVariantResponse)
         return response.imageVariant
 
-    async def upload_image_url(self, url: str) -> str:
+    async def upload_image_url(self, url: str) -> ApiImage:
         method = 'POST'
         path = f'v1/upload-image-url'
         request = UploadImageUrlRequest(url=url)
         response = await self.make_request(method=method, path=path, request=request, responseClass=UploadImageUrlResponse)
-        return response.imageId
+        return response.image

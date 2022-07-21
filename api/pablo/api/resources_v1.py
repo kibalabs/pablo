@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from pablo.internal.model import Image
+from pablo.internal.model import CLOUDFRONT_URL, Image, ImageVariant
 
 
 class ApiImage(BaseModel):
@@ -9,6 +9,7 @@ class ApiImage(BaseModel):
     height: int
     format: str
     url: str
+    resizableUrl: str
 
     @classmethod
     def from_model(cls, model: Image):
@@ -17,27 +18,25 @@ class ApiImage(BaseModel):
             width=model.width,
             height=model.height,
             format=model.format,
-            url=model.url,
+            # TODO(krishan711): these would be better using servingUrl instead of hard-coding
+            url=f'{CLOUDFRONT_URL}/static/images/{model.imageId}/{model.filename}',
+            resizableUrl=f'{CLOUDFRONT_URL}/v1/images/{model.imageId}/go',
         )
 
 
 class ApiImageVariant(BaseModel):
     imageId: str
-    variantId: str
+    imageVariantId: str
     width: int
     height: int
-    format: str
-    url: str
 
     @classmethod
-    def from_model(cls, model: Image):
+    def from_model(cls, model: ImageVariant):
         return cls(
             imageId=model.imageId,
-            variantId=model.variantId,
+            imageVariantId=model.imageVariantId,
             width=model.width,
             height=model.height,
-            format=model.format,
-            url=model.url,
         )
 
 
