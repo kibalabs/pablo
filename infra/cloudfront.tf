@@ -14,7 +14,6 @@ resource "aws_cloudfront_cache_policy" "default" {
       header_behavior = "whitelist"
       headers {
         items = [
-          "Origin",
           "Access-Control-Request-Method",
           "Access-Control-Request-Headers",
           "Authorization",
@@ -37,14 +36,13 @@ resource "aws_cloudfront_cache_policy" "api" {
     enable_accept_encoding_brotli = true
     enable_accept_encoding_gzip = true
     cookies_config {
-      cookie_behavior = "all"
+      cookie_behavior = "none"
     }
     headers_config {
       # NOTE(krishan711): there is no all here, should be updated as needed with a whitelist
       header_behavior = "whitelist"
       headers {
         items = [
-          "Origin",
           "Access-Control-Request-Method",
           "Access-Control-Request-Headers",
           "Authorization",
