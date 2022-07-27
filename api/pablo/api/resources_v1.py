@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
-from pablo.internal.model import SERVING_URL, Image, ImageVariant
+from pablo.internal.model import SERVING_URL
+from pablo.internal.model import Image
+from pablo.internal.model import ImageVariant
 
 
 class ApiImage(BaseModel):
