@@ -25,9 +25,9 @@ from starlette.responses import Response
 
 from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.messages import ResizeImageMessageContent
-from pablo.internal.model import CLOUDFRONT_URL
 from pablo.internal.model import IMAGE_FORMAT_EXTENSION_MAP
 from pablo.internal.model import IMAGE_FORMAT_PIL_TYPE_MAP
+from pablo.internal.model import SERVING_URL
 from pablo.internal.model import Image
 from pablo.internal.model import ImageFormat
 from pablo.internal.model import ImageVariant
@@ -108,7 +108,7 @@ class PabloManager:
         if url.startswith('ipfs://'):
             cid = url.replace('ipfs://', '')
             await self.load_ipfs(cid=cid)
-            resolvedUrl = f'{CLOUDFRONT_URL}/static/ipfs/{cid}'
+            resolvedUrl = f'{SERVING_URL}/static/ipfs/{cid}'
         response = await self.requester.get(url=resolvedUrl, outputFilePath=localFilePath)
         imageFormat = response.headers.get('content-type')
         if imageFormat and imageFormat not in IMAGE_FORMAT_EXTENSION_MAP:

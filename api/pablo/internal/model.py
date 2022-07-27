@@ -2,6 +2,7 @@ import dataclasses
 import datetime
 
 CLOUDFRONT_URL = 'https://d35ci2i0uce4j6.cloudfront.net'
+SERVING_URL = 'https://pablo-images.kibalabs.com'
 
 
 class ImageFormat:

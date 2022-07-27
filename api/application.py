@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pablo.api.api_v1 import create_api as create_v1_api
 from pablo.api.static import create_api as create_static_api
 from pablo.internal.ipfs_requester import IpfsRequester
-from pablo.internal.model import CLOUDFRONT_URL
+from pablo.internal.model import SERVING_URL
 from pablo.internal.pablo_manager import PabloManager
 from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
@@ -29,7 +29,7 @@ name = os.environ.get('NAME', 'pablo-api')
 version = os.environ.get('VERSION', 'local')
 environment = os.environ.get('ENV', 'dev')
 isRunningDebugMode = environment == 'dev'
-servingUrl = os.environ.get('SERVING_URL', CLOUDFRONT_URL)
+servingUrl = os.environ.get('SERVING_URL', SERVING_URL)
 
 if isRunningDebugMode:
     logging.init_basic_logging()

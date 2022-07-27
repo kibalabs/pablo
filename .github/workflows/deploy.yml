@@ -27,6 +27,7 @@ jobs:
     env:
       DOCKER_IMAGE: package
       PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
