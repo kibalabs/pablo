@@ -14,7 +14,7 @@ from core.store.database import Database
 from core.util.value_holder import RequestIdHolder
 
 from pablo.internal.ipfs_requester import IpfsRequester
-from pablo.internal.model import CLOUDFRONT_URL
+from pablo.internal.model import SERVING_URL
 from pablo.internal.pablo_manager import PabloManager
 from pablo.internal.pablo_message_processor import PabloMessageProcessor
 from pablo.store.retriever import Retriever
@@ -27,7 +27,7 @@ async def main():
     version = os.environ.get('VERSION', 'local')
     environment = os.environ.get('ENV', 'dev')
     isRunningDebugMode = environment == 'dev'
-    servingUrl = os.environ.get('SERVING_URL', CLOUDFRONT_URL)
+    servingUrl = os.environ.get('SERVING_URL', SERVING_URL)
 
     if isRunningDebugMode:
         logging.init_basic_logging()
