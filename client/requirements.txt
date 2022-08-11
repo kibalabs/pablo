@@ -1,1 +1,1 @@
-kiba-core[requester]>0.3
+kiba-core[requester]>=0.3.0
