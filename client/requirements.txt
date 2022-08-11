@@ -1,1 +1,1 @@
-kiba-core[requester]==0.3.1.dev4
+kiba-core[requester]>0.4

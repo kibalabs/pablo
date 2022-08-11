@@ -13,7 +13,7 @@ with open(os.path.join(setupDirectory, 'requirements.txt'), 'r') as requirements
 
 setup(
     name='kiba-pablo-client',
-    version='0.1.0',
+    version='0.1.1',
     description='Pablo client',
     url='https://github.com/kibalabs/pablo',
     packages=find_packages(exclude=['tests*']),
