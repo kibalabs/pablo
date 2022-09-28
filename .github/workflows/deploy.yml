@@ -56,7 +56,7 @@ jobs:
         uses: actions/create-release@v1
         if: steps.check.outputs.exists != '1'
         with:
-          tag_name: client-${{ steps.check.outputs.version }}
+          tag_name: tags/client-${{ steps.check.outputs.version }}
           release_name: Client ${{ steps.check.outputs.version }}
           draft: false
           prerelease: false

@@ -33,13 +33,16 @@ resource "aws_s3_bucket_cors_configuration" "example" {
     allowed_origins = [
       "http://localhost:3000",
       "https://pfpkit.xyz",
-      "https://mdtp-gallery.kibalabs.com",
       "https://milliondollartokenpage.com",
-      "https://gallery.milliondollartokenpage.com",
-      "https://nft.tokenhunt.io",
+      "https://tokenhunt.io",
       "https://stormdrop.spriteclubnft.com",
+      "https://gallery.milliondollartokenpage.com",
       "https://sprites-gallery.tokenpage.xyz",
       "https://pepes-gallery.tokenpage.xyz",
+      "https://rudeboys.tokenpage.xyz",
+      "https://rudeboys-mint.tokenpage.xyz",
+      "https://rudeboys-admin.tokenpage.xyz",
+      "https://*.tokenpage.xyz",
     ]
     expose_headers = ["ETag", "Access-Control-Allow-Origin"]
     max_age_seconds = 86400

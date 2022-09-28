@@ -1,5 +1,5 @@
-resource "aws_cloudfront_cache_policy" "default" {
-  name = "${local.project}-default"
+resource "aws_cloudfront_cache_policy" "s3" {
+  name = "${local.project}-s3"
   default_ttl = 86400
   min_ttl = 0
   max_ttl = 31536000
@@ -16,7 +16,7 @@ resource "aws_cloudfront_cache_policy" "default" {
         items = [
           "Access-Control-Request-Method",
           "Access-Control-Request-Headers",
-          "Authorization",
+          "Origin",
         ]
       }
     }
@@ -46,6 +46,7 @@ resource "aws_cloudfront_cache_policy" "api" {
           "Access-Control-Request-Method",
           "Access-Control-Request-Headers",
           "Authorization",
+          "Origin",
         ]
       }
     }
@@ -54,6 +55,47 @@ resource "aws_cloudfront_cache_policy" "api" {
     }
   }
 }
+
+resource "aws_cloudfront_origin_request_policy" "s3" {
+  name = "${local.project}-s3"
+  cookies_config {
+    cookie_behavior = "none"
+  }
+  headers_config {
+    header_behavior = "whitelist"
+    headers {
+      items = [
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Origin",
+      ]
+    }
+  }
+  query_strings_config {
+    query_string_behavior = "none"
+  }
+}
+
+resource "aws_cloudfront_origin_request_policy" "api" {
+  name = "${local.project}-api"
+  cookies_config {
+    cookie_behavior = "all"
+  }
+  headers_config {
+    header_behavior = "whitelist"
+    headers {
+      items = [
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Origin",
+      ]
+    }
+  }
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
 
 resource "aws_cloudfront_distribution" "api" {
   enabled = true
@@ -84,16 +126,18 @@ resource "aws_cloudfront_distribution" "api" {
     target_origin_id = aws_s3_bucket.storage.id
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
-    cached_methods = ["GET", "HEAD"]
-    cache_policy_id = aws_cloudfront_cache_policy.default.id
+    cached_methods = ["GET", "HEAD", "OPTIONS"]
+    cache_policy_id = aws_cloudfront_cache_policy.s3.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.s3.id
   }
 
   default_cache_behavior {
     target_origin_id = "api"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"]
-    cached_methods = ["GET", "HEAD"]
+    cached_methods = ["GET", "HEAD", "OPTIONS"]
     cache_policy_id = aws_cloudfront_cache_policy.api.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
 
   viewer_certificate {
