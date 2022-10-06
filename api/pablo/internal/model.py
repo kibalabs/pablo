@@ -9,6 +9,7 @@ class ImageFormat:
     JPG = "image/jpg"
     PNG = "image/png"
     WEBP = "image/webp"
+    GIF = "image/gif"
     SVG = "image/svg+xml"
 
 
@@ -16,6 +17,7 @@ IMAGE_FORMAT_EXTENSION_MAP = {
     ImageFormat.JPG: 'jpg',
     ImageFormat.PNG: 'png',
     ImageFormat.WEBP: 'webp',
+    ImageFormat.GIF: 'gif',
     ImageFormat.SVG: 'svg',
 }
 
@@ -23,6 +25,11 @@ IMAGE_FORMAT_PIL_TYPE_MAP = {
     ImageFormat.JPG: 'JPEG',
     ImageFormat.PNG: 'PNG',
     ImageFormat.WEBP: 'WEBP',
+    ImageFormat.GIF: 'gif',
+}
+
+ANIMATED_IMAGE_FORMATS = {
+    ImageFormat.GIF,
 }
 
 @dataclasses.dataclass
