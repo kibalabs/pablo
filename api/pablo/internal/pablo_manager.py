@@ -26,7 +26,8 @@ from starlette.responses import Response
 
 from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.messages import ResizeImageMessageContent
-from pablo.internal.model import ANIMATED_IMAGE_FORMATS, IMAGE_FORMAT_EXTENSION_MAP
+from pablo.internal.model import ANIMATED_IMAGE_FORMATS
+from pablo.internal.model import IMAGE_FORMAT_EXTENSION_MAP
 from pablo.internal.model import IMAGE_FORMAT_PIL_TYPE_MAP
 from pablo.internal.model import SERVING_URL
 from pablo.internal.model import Image
