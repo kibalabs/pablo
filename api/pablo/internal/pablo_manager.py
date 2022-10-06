@@ -37,7 +37,7 @@ from pablo.store.retriever import Retriever
 from pablo.store.saver import Saver
 from pablo.store.schema import ImageVariantsTable
 
-_TARGET_SIZES = [100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
+_TARGET_SIZES = [50, 100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
 
 class PabloManager:
 
