@@ -21,10 +21,12 @@ from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
 from core.util import file_util
 from PIL import Image as PILImage
+from PIL import ImageSequence as PILImageSequence
 from starlette.responses import Response
 
 from pablo.internal.ipfs_requester import IpfsRequester
 from pablo.internal.messages import ResizeImageMessageContent
+from pablo.internal.model import ANIMATED_IMAGE_FORMATS
 from pablo.internal.model import IMAGE_FORMAT_EXTENSION_MAP
 from pablo.internal.model import IMAGE_FORMAT_PIL_TYPE_MAP
 from pablo.internal.model import SERVING_URL
@@ -148,13 +150,22 @@ class PabloManager:
 
     @staticmethod
     def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, width: int, height: int) -> Image:
+        if imageFormat not in IMAGE_FORMAT_PIL_TYPE_MAP:
+            raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
         content = BytesIO()
-        if imageFormat in IMAGE_FORMAT_PIL_TYPE_MAP:
+        if imageFormat in ANIMATED_IMAGE_FORMATS:
+            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+                frames = []
+                for frame in PILImageSequence.Iterator(pilImage):
+                    newFrame = frame.copy()
+                    newFrame.thumbnail((width, height), PILImage.Resampling.LANCZOS)
+                    frames.append(newFrame)
+                outputImage = frames[0]
+                outputImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat], save_all=True, append_images=frames[1:], disposal=pilImage.disposal_method, **pilImage.info)
+        else:
             with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
                 newPilImage = pilImage.resize(size=(width, height))
                 newPilImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat])
-        else:
-            raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
         return content.getvalue()
 
     async def resize_image(self, imageId: str) -> None:
