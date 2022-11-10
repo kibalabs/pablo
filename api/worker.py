@@ -46,8 +46,8 @@ async def main():
     infuraIpfsAuth = BasicAuthentication(username=os.environ['INFURA_IPFS_ID'], password=os.environ["INFURA_IPFS_SECRET"])
     ipfsRequesters = [
         IpfsRequester(ipfsPrefix='https://ipfs.io/ipfs/'),
+        IpfsRequester(ipfsPrefix='https://w3s.link/ipfs/'),
         IpfsRequester(ipfsPrefix='https://notd.infura-ipfs.io/ipfs/', headers={'Authorization': f'Basic {infuraIpfsAuth.to_string()}'}),
-        # IpfsRequester(ipfsPrefix='https://kibalabs.mypinata.cloud/ipfs/'),
     ]
     pabloManager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=servingUrl)
 
