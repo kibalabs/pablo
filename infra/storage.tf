@@ -37,11 +37,11 @@ resource "aws_s3_bucket_cors_configuration" "example" {
       "https://tokenhunt.io",
       "https://stormdrop.spriteclubnft.com",
       "https://gallery.milliondollartokenpage.com",
-      "https://sprites-gallery.tokenpage.xyz",
-      "https://pepes-gallery.tokenpage.xyz",
-      "https://rudeboys.tokenpage.xyz",
-      "https://rudeboys-mint.tokenpage.xyz",
-      "https://rudeboys-admin.tokenpage.xyz",
+      # "https://sprites-gallery.tokenpage.xyz",
+      # "https://pepes-gallery.tokenpage.xyz",
+      # "https://rudeboys.tokenpage.xyz",
+      # "https://rudeboys-mint.tokenpage.xyz",
+      # "https://rudeboys-admin.tokenpage.xyz",
       "https://*.tokenpage.xyz",
     ]
     expose_headers = ["ETag", "Access-Control-Allow-Origin"]

@@ -37,8 +37,8 @@ def create_api(manager: PabloManager) -> APIRouter():
         return GetImageVariantResponse(imageVariant=ApiImageVariant.from_model(model=imageVariant))
 
     @router.get('/images/{imageId}/go')
-    async def go_to_image(imageId: str, w: Optional[int] = None, h: Optional[int] = None, original: Optional[str] = None):  # pylint: disable=invalid-name
-        await manager.go_to_image(imageId=imageId, width=w, height=h, original=bool(original))
+    async def go_to_image(imageId: str, p: Optional[bool] = None, w: Optional[int] = None, h: Optional[int] = None, original: Optional[str] = None):  # pylint: disable=invalid-name
+        await manager.go_to_image(imageId=imageId, isPreview=p, width=w, height=h, original=bool(original))
 
     # @router.post('/generate-image-upload', response_model=GenerateImageUploadResponse)
     # async def generate_image_upload(request: GenerateImageUploadRequest):

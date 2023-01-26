@@ -29,15 +29,15 @@ class Retriever(CoreRetriever):
         if limit:
             query = query.limit(limit)
         result = await self.database.execute(query=query, connection=connection)
-        images = [image_from_row(row) for row in result]
+        images = [image_from_row(row) for row in result.mappings()]
         return images
 
     async def get_image(self, imageId: str, connection: Optional[DatabaseConnection] = None) -> Image:
-        query = ImagesTable.select(ImagesTable.c.imageId == imageId)
+        query = ImagesTable.select().where(ImagesTable.c.imageId == imageId)
         result = await self.database.execute(query=query, connection=connection)
-        row = result.first()
+        row = result.mappings().first()
         if not row:
-            raise NotFoundException(message=f'Image {imageId} not found')
+            raise NotFoundException(message=f'Image with imageId:{imageId} not found')
         image = image_from_row(row)
         return image
 
@@ -50,15 +50,15 @@ class Retriever(CoreRetriever):
         if limit:
             query = query.limit(limit)
         result = await self.database.execute(query=query, connection=connection)
-        imageVariants = [image_variant_from_row(row) for row in result]
+        imageVariants = [image_variant_from_row(row) for row in result.mappings()]
         return imageVariants
 
     async def get_image_variant(self, imageVariantId: str, connection: Optional[DatabaseConnection] = None) -> Image:
-        query = ImageVariantsTable.select(ImageVariantsTable.c.id == imageVariantId)
+        query = ImageVariantsTable.select().where(ImageVariantsTable.c.id == imageVariantId)
         result = await self.database.execute(query=query, connection=connection)
-        row = result.first()
+        row = result.mappings().first()
         if not row:
-            raise NotFoundException(message=f'ImageVariant {imageVariantId} not found')
+            raise NotFoundException(message=f'ImageVariant with imageVariantId:{imageVariantId} not found')
         imageVariant = image_variant_from_row(row)
         return imageVariant
 
@@ -71,23 +71,23 @@ class Retriever(CoreRetriever):
         if limit:
             query = query.limit(limit)
         result = await self.database.execute(query=query, connection=connection)
-        urlUploads = [url_upload_from_row(row) for row in result]
+        urlUploads = [url_upload_from_row(row) for row in result.mappings()]
         return urlUploads
 
     async def get_url_upload(self, urlUploadId: str, connection: Optional[DatabaseConnection] = None) -> Image:
-        query = UrlUploadsTable.select(UrlUploadsTable.c.id == urlUploadId)
+        query = UrlUploadsTable.select().where(UrlUploadsTable.c.id == urlUploadId)
         result = await self.database.execute(query=query, connection=connection)
-        row = result.first()
+        row = result.mappings().first()
         if not row:
-            raise NotFoundException(message=f'UrlUpload {urlUploadId} not found')
+            raise NotFoundException(message=f'UrlUpload with urlUploadId:{urlUploadId} not found')
         urlUpload = url_upload_from_row(row)
         return urlUpload
 
     async def get_url_upload_by_url(self, url: str, connection: Optional[DatabaseConnection] = None) -> Image:
-        query = UrlUploadsTable.select(UrlUploadsTable.c.url == url)
+        query = UrlUploadsTable.select().where(UrlUploadsTable.c.url == url)
         result = await self.database.execute(query=query, connection=connection)
-        row = result.first()
+        row = result.mappings().first()
         if not row:
-            raise NotFoundException(message=f'UrlUpload with url {url} not found')
+            raise NotFoundException(message=f'UrlUpload with url:{url} not found')
         urlUpload = url_upload_from_row(row)
         return urlUpload

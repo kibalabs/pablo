@@ -1,5 +1,5 @@
+import io
 import uuid
-from io import BytesIO
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -11,10 +11,11 @@ from core import logging
 from core.exceptions import BadRequestException
 from core.exceptions import NotFoundException
 from core.exceptions import PermanentRedirectException
-from core.queues.sqs_message_queue import SqsMessageQueue
+from core.queues.message_queue import MessageQueue
 from core.requester import Requester
 from core.requester import ResponseException
 from core.s3_manager import S3Manager
+from core.store.retriever import BooleanFieldFilter
 from core.store.retriever import Direction
 from core.store.retriever import IntegerFieldFilter
 from core.store.retriever import Order
@@ -41,7 +42,7 @@ _TARGET_SIZES = [50, 100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
 
 class PabloManager:
 
-    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
+    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: MessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
@@ -74,11 +75,15 @@ class PabloManager:
             raise NotFoundException()
         return image
 
-    async def go_to_image(self, imageId: str, width: Optional[int] = None, height: Optional[int] = None, original: Optional[bool] = None) -> str:
+    async def go_to_image(self, imageId: str, isPreview: Optional[bool] = None, width: Optional[int] = None, height: Optional[int] = None, original: Optional[bool] = None) -> str:
         image = await self.retriever.get_image(imageId=imageId)
+        isPreview = isPreview or False
         if original:
             raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
-        filters = [StringFieldFilter(fieldName=ImageVariantsTable.c.imageId.key, eq=imageId)]
+        filters = [
+            StringFieldFilter(fieldName=ImageVariantsTable.c.imageId.key, eq=imageId),
+            BooleanFieldFilter(fieldName=ImageVariantsTable.c.isPreview.key, eq=isPreview),
+        ]
         if width is not None:
             filters.append(IntegerFieldFilter(fieldName=ImageVariantsTable.c.width.key, gte=width))
         if height is not None:
@@ -138,7 +143,7 @@ class PabloManager:
         width = 0
         height = 0
         if imageFormat != ImageFormat.SVG:
-            with PILImage.open(BytesIO(imageContent)) as pilImage:
+            with PILImage.open(io.BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
         await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
@@ -149,21 +154,24 @@ class PabloManager:
         await self.workQueue.send_message(message=ResizeImageMessageContent(imageId=imageId).to_message())
 
     @staticmethod
-    def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, width: int, height: int) -> Image:
+    def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, isPreview: bool, width: int, height: int) -> Image:
         if imageFormat not in IMAGE_FORMAT_PIL_TYPE_MAP:
             raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
-        content = BytesIO()
+        content = io.BytesIO()
         if imageFormat in ANIMATED_IMAGE_FORMATS:
-            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+            with PILImage.open(fp=io.BytesIO(imageContent)) as pilImage:
                 frames = []
                 for frame in PILImageSequence.Iterator(pilImage):
                     newFrame = frame.copy()
                     newFrame.thumbnail((width, height), PILImage.Resampling.LANCZOS)
                     frames.append(newFrame)
                 outputImage = frames[0]
-                outputImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat], save_all=True, append_images=frames[1:], disposal=pilImage.disposal_method, **pilImage.info)
+                if isPreview:
+                    outputImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat], save_all=False, append_images=[], disposal=pilImage.disposal_method, **pilImage.info)
+                else:
+                    outputImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat], save_all=True, append_images=frames[1:], disposal=pilImage.disposal_method, **pilImage.info)
         else:
-            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+            with PILImage.open(fp=io.BytesIO(imageContent)) as pilImage:
                 newPilImage = pilImage.resize(size=(width, height))
                 newPilImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat])
         return content.getvalue()
@@ -173,20 +181,27 @@ class PabloManager:
         imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         extension = IMAGE_FORMAT_EXTENSION_MAP[image.format]
         imageVariants = await self.list_image_variants(imageId=imageId)
-        existingSizes = {(imageVariant.width, imageVariant.height) for imageVariant in imageVariants}
+        existingSizes = {(imageVariant.isPreview, imageVariant.width, imageVariant.height) for imageVariant in imageVariants}
         targetSizes: Set[Tuple[int, int]] = set()
         for targetSize in _TARGET_SIZES:
+            if image.format in ANIMATED_IMAGE_FORMATS:
+                if image.width >= targetSize:
+                    targetSizes.add((True, targetSize, int(targetSize * (image.height / image.width))))
+                if image.height >= targetSize:
+                    targetSizes.add((True, int(targetSize * (image.width / image.height)), targetSize))
             if image.width >= targetSize:
-                targetSizes.add((targetSize, int(targetSize * (image.height / image.width))))
+                targetSizes.add((False, targetSize, int(targetSize * (image.height / image.width))))
             if image.height >= targetSize:
-                targetSizes.add((int(targetSize * (image.width / image.height)), targetSize))
-        for targetWidth, targetHeight in targetSizes - existingSizes:
+                targetSizes.add((False, int(targetSize * (image.width / image.height)), targetSize))
+        for targetIsPreview, targetWidth, targetHeight in targetSizes - existingSizes:
             # TODO(krishan711): check if the variant already exists
-            logging.info(f'Resizing to ({targetWidth}, {targetHeight})')
-            resizedImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=image.format, width=targetWidth, height=targetHeight)
+            logging.info(f'Resizing to ({targetIsPreview}, {targetWidth}, {targetHeight})')
+            resizedImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=image.format, isPreview=targetIsPreview, width=targetWidth, height=targetHeight)
             variantFileName = f'{targetWidth}-{targetHeight}.{extension}'
+            if targetIsPreview:
+                variantFileName = f'preview-{variantFileName}'
             await self.s3Manager.write_file(content=resizedImageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{variantFileName}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
-            await self.saver.create_image_variant(imageId=imageId, filename=variantFileName, width=targetWidth, height=targetHeight, area=(targetWidth * targetHeight))
+            await self.saver.create_image_variant(imageId=imageId, filename=variantFileName, isPreview=targetIsPreview, width=targetWidth, height=targetHeight, area=(targetWidth * targetHeight))
 
     async def get_ipfs_head(self, cid: str) -> Response:
         try:

@@ -1,24 +1,21 @@
-FROM python:3.9.2-slim
+FROM python:3.10.8-slim as build
+
+RUN apt-get update && apt-get install --yes --no-install-recommends make
+
+# NOTE(krishan711): libmagc required specifically for pablo
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libmagic-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY makefile $WORKDIR
 
-# NOTE(krishan711): GCC (and others) needed to build some dependencies. Remove when everything has a wheel.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libc-dev \
-    && apt-get install -y --no-install-recommends libmagic-dev \
-    && pip install cytoolz==0.11.0 \
-    && pip install bitarray==1.2.2 \
-    && pip install lru-dict==1.1.7 \
-    && pip install httptools==0.1.1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove gcc libc-dev
-
+# Install requirements
 COPY requirements-dev.txt $WORKDIR
-RUN pip install -r requirements-dev.txt
 COPY requirements.txt $WORKDIR
-RUN pip install -r requirements.txt
+RUN make install
 
 COPY . $WORKDIR
 
 EXPOSE 5000
-CMD ["./start-api.sh"]
+CMD ["make", "start-prod"]
