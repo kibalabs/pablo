@@ -1,5 +1,5 @@
+import io
 import uuid
-from io import BytesIO
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -143,7 +143,7 @@ class PabloManager:
         width = 0
         height = 0
         if imageFormat != ImageFormat.SVG:
-            with PILImage.open(BytesIO(imageContent)) as pilImage:
+            with PILImage.open(io.BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
         await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
@@ -157,9 +157,9 @@ class PabloManager:
     def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, isPreview: bool, width: int, height: int) -> Image:
         if imageFormat not in IMAGE_FORMAT_PIL_TYPE_MAP:
             raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
-        content = BytesIO()
+        content = io.BytesIO()
         if imageFormat in ANIMATED_IMAGE_FORMATS:
-            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+            with PILImage.open(fp=io.BytesIO(imageContent)) as pilImage:
                 frames = []
                 for frame in PILImageSequence.Iterator(pilImage):
                     newFrame = frame.copy()
@@ -171,7 +171,7 @@ class PabloManager:
                 else:
                     outputImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat], save_all=True, append_images=frames[1:], disposal=pilImage.disposal_method, **pilImage.info)
         else:
-            with PILImage.open(fp=BytesIO(imageContent)) as pilImage:
+            with PILImage.open(fp=io.BytesIO(imageContent)) as pilImage:
                 newPilImage = pilImage.resize(size=(width, height))
                 newPilImage.save(fp=content, format=IMAGE_FORMAT_PIL_TYPE_MAP[imageFormat])
         return content.getvalue()
