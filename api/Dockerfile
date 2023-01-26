@@ -6,10 +6,10 @@ RUN apt-get update && apt-get install --yes --no-install-recommends make
 RUN apt-get update \
     && apt-get install -y --no-install-recommends gcc libc-dev \
     && apt-get install -y --no-install-recommends libmagic-dev \
-    && pip install cytoolz==0.11.0 \
-    && pip install bitarray==1.2.2 \
-    && pip install lru-dict==1.1.7 \
-    && pip install httptools==0.1.1 \
+    \ # && pip install cytoolz==0.11.0 \
+    \ # && pip install bitarray==1.2.2 \
+    \ # && pip install lru-dict==1.1.7 \
+    \ # && pip install httptools==0.1.1 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get purge -y --auto-remove gcc libc-dev
 
