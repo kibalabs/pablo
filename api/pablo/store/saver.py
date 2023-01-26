@@ -40,7 +40,7 @@ class Saver(CoreSaver):
             area=area,
         )
 
-    async def create_image_variant(self, imageId: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> ImageVariant:
+    async def create_image_variant(self, imageId: str, filename: str, isPreview: bool, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> ImageVariant:
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
         values = {
@@ -48,6 +48,7 @@ class Saver(CoreSaver):
             ImageVariantsTable.c.updatedDate.key: updatedDate,
             ImageVariantsTable.c.imageId.key: imageId,
             ImageVariantsTable.c.filename.key: filename,
+            ImageVariantsTable.c.isPreview.key: isPreview,
             ImageVariantsTable.c.width.key: width,
             ImageVariantsTable.c.height.key: height,
             ImageVariantsTable.c.area.key: area,
@@ -61,6 +62,7 @@ class Saver(CoreSaver):
             updatedDate=updatedDate,
             imageId=imageId,
             filename=filename,
+            isPreview=isPreview,
             width=width,
             height=height,
             area=area,

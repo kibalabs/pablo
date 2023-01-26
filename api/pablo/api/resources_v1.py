@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from pablo.internal.model import SERVING_URL
@@ -14,7 +16,7 @@ class ApiImage(BaseModel):
     resizableUrl: str
 
     @classmethod
-    def from_model(cls, model: Image):
+    def from_model(cls, model: Image) -> ApiImage:
         return cls(
             imageId=model.imageId,
             width=model.width,
@@ -33,7 +35,7 @@ class ApiImageVariant(BaseModel):
     height: int
 
     @classmethod
-    def from_model(cls, model: ImageVariant):
+    def from_model(cls, model: ImageVariant) -> ApiImageVariant:
         return cls(
             imageId=model.imageId,
             imageVariantId=model.imageVariantId,
@@ -47,7 +49,7 @@ class ApiImageVariant(BaseModel):
 #     params: Dict[str, str]
 
 #     @classmethod
-#     def from_presigned_upload(cls, presignedUpload: S3PresignedUpload):
+#     def from_presigned_upload(cls, presignedUpload: S3PresignedUpload) -> ApiPresignedUpload:
 #         return cls(
 #             url=presignedUpload.url,
 #             params={field.name: field.value for field in presignedUpload.fields},

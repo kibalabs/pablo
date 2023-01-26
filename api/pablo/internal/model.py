@@ -68,6 +68,7 @@ class ImageVariant:
     updatedDate: datetime.datetime
     imageId: str
     filename: str
+    isPreview: bool
     width: int
     height: int
     area: int
