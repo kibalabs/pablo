@@ -9,6 +9,7 @@ from pablo.internal.pablo_manager import PabloManager
 class PabloMessageProcessor(MessageProcessor):
 
     def __init__(self, pabloManager: PabloManager):
+        super().__init__()
         self.pabloManager = pabloManager
 
     async def process_message(self, message: Message) -> None:
