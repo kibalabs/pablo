@@ -130,36 +130,34 @@ class PabloManager:
 
     async def save_image(self, imageId: str, imageFormat: Optional[str]) -> Image:
         logging.info(f'Saving image: {imageId} (imageFormat:{imageFormat})')
-        # try:
-        #     image = await self.retriever.get_image(imageId=imageId)
-        # except NotFoundException:
-        #     image = None
-        # if image:
-        #     logging.info(f'Skipping saving image that already exists: {imageId}')
-        #     return
+        try:
+            image = await self.retriever.get_image(imageId=imageId)
+        except NotFoundException:
+            image = None
+        if image:
+            logging.info(f'Skipping saving image that already exists: {imageId}')
+            return
         imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         if not imageFormat:
             imageFormat = magic.from_buffer(imageContent)
         if imageFormat not in IMAGE_FORMAT_EXTENSION_MAP:
             raise BadRequestException(f'Unsupported image format')
-        print('imageFormat', imageFormat)
-        # filename = f'original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
+        filename = f'original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
         width = 0
         height = 0
         if imageFormat != ImageFormat.SVG:
             with PILImage.open(io.BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
-        # await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
+        await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
         previewFilename: Optional[str] = None
         if imageFormat in ANIMATED_IMAGE_FORMATS:
             logging.info('Saving original preview')
             previewFilename = f'preview-original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
             previewImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=imageFormat, isPreview=True, width=width, height=height)
             await self.s3Manager.write_file(content=previewImageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{previewFilename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
-        print(f"UPDATE tbl_images SET preview_filename='{previewFilename}' WHERE id='{imageId}';")
-        # image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, previewFilename=previewFilename, width=width, height=height, area=(width * height))
-        # await self.resize_image_deferred(imageId=imageId)
-        # return image
+        image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, previewFilename=previewFilename, width=width, height=height, area=(width * height))
+        await self.resize_image_deferred(imageId=imageId)
+        return image
 
     async def resize_image_deferred(self, imageId: str) -> None:
         await self.workQueue.send_message(message=ResizeImageMessageContent(imageId=imageId).to_message())
