@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+from typing import Optional
 
 CLOUDFRONT_URL = 'https://d35ci2i0uce4j6.cloudfront.net'
 SERVING_URL = 'https://pablo-images.kibalabs.com'
@@ -56,6 +57,7 @@ class Image:
     updatedDate: datetime.datetime
     format: str
     filename: str
+    previewFilename: Optional[str]
     width: int
     height: int
     area: int

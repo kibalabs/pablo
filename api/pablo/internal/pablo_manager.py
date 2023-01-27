@@ -95,6 +95,8 @@ class PabloManager:
         )
         if len(imageVariants) > 0:
             raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{imageVariants[0].filename}')
+        if isPreview and image.previewFilename:
+            raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.previewFilename}')
         raise PermanentRedirectException(location=f'{self.imagesServingUrl}/{imageId}/{image.filename}')
 
     # async def generate_image_upload(self, filename: str) -> S3PresignedUpload:
@@ -127,6 +129,7 @@ class PabloManager:
         return image
 
     async def save_image(self, imageId: str, imageFormat: Optional[str]) -> Image:
+        logging.info(f'Saving image: {imageId} (imageFormat:{imageFormat})')
         try:
             image = await self.retriever.get_image(imageId=imageId)
         except NotFoundException:
@@ -146,7 +149,13 @@ class PabloManager:
             with PILImage.open(io.BytesIO(imageContent)) as pilImage:
                 width, height = pilImage.size
         await self.s3Manager.write_file(content=imageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{filename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
-        image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, width=width, height=height, area=(width * height))
+        previewFilename: Optional[str] = None
+        if imageFormat in ANIMATED_IMAGE_FORMATS:
+            logging.info('Saving original preview')
+            previewFilename = f'preview-original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
+            previewImageContent = self._resize_image_content(imageContent=imageContent, imageFormat=imageFormat, isPreview=True, width=width, height=height)
+            await self.s3Manager.write_file(content=previewImageContent, targetPath=f'{self.imagesS3Path}/{imageId}/{previewFilename}', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
+        image = await self.saver.create_image(imageId=imageId, format=imageFormat, filename=filename, previewFilename=previewFilename, width=width, height=height, area=(width * height))
         await self.resize_image_deferred(imageId=imageId)
         return image
 

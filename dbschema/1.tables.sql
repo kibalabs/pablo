@@ -4,6 +4,7 @@ CREATE TABLE tbl_images (
     updated_date TIMESTAMP NOT NULL,
     format TEXT NOT NULL,
     filename TEXT NOT NULL,
+    preview_filename TEXT,
     width INTEGER NOT NULL,
     height INTEGER NOT NULL,
     area INTEGER NOT NULL
