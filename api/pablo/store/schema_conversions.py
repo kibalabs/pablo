@@ -15,6 +15,7 @@ def image_from_row(rowMapping: RowMapping) -> Image:
         updatedDate=rowMapping[ImagesTable.c.updatedDate],
         format=rowMapping[ImagesTable.c.format],
         filename=rowMapping[ImagesTable.c.filename],
+        previewFilename=rowMapping[ImagesTable.c.previewFilename],
         width=rowMapping[ImagesTable.c.width],
         height=rowMapping[ImagesTable.c.height],
         area=rowMapping[ImagesTable.c.area],

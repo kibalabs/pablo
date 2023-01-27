@@ -14,7 +14,7 @@ from pablo.store.schema import UrlUploadsTable
 
 class Saver(CoreSaver):
 
-    async def create_image(self, imageId: str, format: str, filename: str, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:  # pylint: disable=redefined-builtin
+    async def create_image(self, imageId: str, format: str, filename: str, previewFilename: Optional[str], width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:  # pylint: disable=redefined-builtin
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
         values = {
@@ -23,6 +23,7 @@ class Saver(CoreSaver):
             ImagesTable.c.updatedDate.key: updatedDate,
             ImagesTable.c.format.key: format,
             ImagesTable.c.filename.key: filename,
+            ImagesTable.c.previewFilename.key: previewFilename,
             ImagesTable.c.width.key: width,
             ImagesTable.c.height.key: height,
             ImagesTable.c.area.key: area,
