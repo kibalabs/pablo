@@ -36,6 +36,7 @@ class Saver(CoreSaver):
             updatedDate=updatedDate,
             format=format,
             filename=filename,
+            previewFilename=previewFilename,
             width=width,
             height=height,
             area=area,
