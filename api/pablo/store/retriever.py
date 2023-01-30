@@ -53,7 +53,7 @@ class Retriever(CoreRetriever):
         imageVariants = [image_variant_from_row(row) for row in result.mappings()]
         return imageVariants
 
-    async def get_image_variant(self, imageVariantId: str, connection: Optional[DatabaseConnection] = None) -> Image:
+    async def get_image_variant(self, imageVariantId: str, connection: Optional[DatabaseConnection] = None) -> ImageVariant:
         query = ImageVariantsTable.select().where(ImageVariantsTable.c.id == imageVariantId)
         result = await self.database.execute(query=query, connection=connection)
         row = result.mappings().first()
@@ -74,7 +74,7 @@ class Retriever(CoreRetriever):
         urlUploads = [url_upload_from_row(row) for row in result.mappings()]
         return urlUploads
 
-    async def get_url_upload(self, urlUploadId: str, connection: Optional[DatabaseConnection] = None) -> Image:
+    async def get_url_upload(self, urlUploadId: str, connection: Optional[DatabaseConnection] = None) -> UrlUpload:
         query = UrlUploadsTable.select().where(UrlUploadsTable.c.id == urlUploadId)
         result = await self.database.execute(query=query, connection=connection)
         row = result.mappings().first()
@@ -83,7 +83,7 @@ class Retriever(CoreRetriever):
         urlUpload = url_upload_from_row(row)
         return urlUpload
 
-    async def get_url_upload_by_url(self, url: str, connection: Optional[DatabaseConnection] = None) -> Image:
+    async def get_url_upload_by_url(self, url: str, connection: Optional[DatabaseConnection] = None) -> UrlUpload:
         query = UrlUploadsTable.select().where(UrlUploadsTable.c.url == url)
         result = await self.database.execute(query=query, connection=connection)
         row = result.mappings().first()
