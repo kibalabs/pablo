@@ -6,7 +6,7 @@ from pablo.internal.pablo_manager import PabloManager
 
 
 # NOTE(krishan711): on cloudfront these would redirect automatically
-def create_api(manager: PabloManager) -> APIRouter():  # pylint: disable=unused-argument
+def create_api(manager: PabloManager) -> APIRouter:  # pylint: disable=unused-argument
     router = APIRouter()
 
     # TODO(krishan711): these would be better using servingUrl instead of hard-coding
