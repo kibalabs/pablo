@@ -22,6 +22,7 @@ IMAGE_FORMAT_EXTENSION_MAP = {
     ImageFormat.SVG: 'svg',
 }
 
+
 IMAGE_FORMAT_PIL_TYPE_MAP = {
     ImageFormat.JPG: 'JPEG',
     ImageFormat.PNG: 'PNG',
@@ -29,9 +30,11 @@ IMAGE_FORMAT_PIL_TYPE_MAP = {
     ImageFormat.GIF: 'gif',
 }
 
+
 ANIMATED_IMAGE_FORMATS = {
     ImageFormat.GIF,
 }
+
 
 @dataclasses.dataclass
 class ImageData:
