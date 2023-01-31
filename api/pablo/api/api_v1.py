@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter
 from starlette.responses import Response
 
+from pablo.api.endpoints_v1 import GetGoToImageResponse
 from pablo.api.endpoints_v1 import GetImageResponse
 from pablo.api.endpoints_v1 import GetImageVariantResponse
 from pablo.api.endpoints_v1 import ListImageVariantsResponse
@@ -13,7 +14,7 @@ from pablo.api.resources_v1 import ApiImageVariant
 from pablo.internal.pablo_manager import PabloManager
 
 
-def create_api(manager: PabloManager) -> APIRouter():
+def create_api(manager: PabloManager) -> APIRouter:
     router = APIRouter()
 
     # @router.get('/images', response_model=ListImagesResponse)
@@ -36,9 +37,10 @@ def create_api(manager: PabloManager) -> APIRouter():
         imageVariant = await manager.get_image_variant(imageId=imageId, imageVariantId=imageVariantId)
         return GetImageVariantResponse(imageVariant=ApiImageVariant.from_model(model=imageVariant))
 
-    @router.get('/images/{imageId}/go')
-    async def go_to_image(imageId: str, p: Optional[bool] = None, w: Optional[int] = None, h: Optional[int] = None, original: Optional[str] = None):  # pylint: disable=invalid-name
+    @router.get('/images/{imageId}/go', response_model=GetGoToImageResponse)
+    async def go_to_image(imageId: str, p: Optional[bool] = None, w: Optional[int] = None, h: Optional[int] = None, original: Optional[str] = None) -> GetGoToImageResponse: # pylint: disable=invalid-name
         await manager.go_to_image(imageId=imageId, isPreview=p, width=w, height=h, original=bool(original))
+        return GetGoToImageResponse()
 
     # @router.post('/generate-image-upload', response_model=GenerateImageUploadResponse)
     # async def generate_image_upload(request: GenerateImageUploadRequest):
@@ -46,7 +48,7 @@ def create_api(manager: PabloManager) -> APIRouter():
     #     return GenerateImageUploadResponse(presignedUpload=ApiPresignedUpload.from_presigned_upload(presignedUpload=presignedUpload))
 
     @router.post('/upload-image-url', response_model=UploadImageUrlResponse)
-    async def upload_image_url(request: UploadImageUrlRequest):
+    async def upload_image_url(request: UploadImageUrlRequest) -> UploadImageUrlResponse:
         image = await manager.upload_image_url(url=request.url)
         return UploadImageUrlResponse(image=ApiImage.from_model(model=image))
 

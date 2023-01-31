@@ -31,17 +31,17 @@ jobs:
           json-file-path: ./lint-check-results.json
           check-name: lint-check
           fail-on-error: false
-      # - name: Run type-check
-      #   run: |
-      #     docker run --name type-check $DOCKER_IMAGE make type-check-ci
-      #     docker cp type-check:/app/type-check-results.json ./type-check-results.json
-      # - name: Upload type-check results
-      #   uses: kibalabs/github-action-create-annotations@main
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     json-file-path: ./type-check-results.json
-      #     check-name: type-check
-      #     fail-on-error: false
+      - name: Run type-check
+        run: |
+          docker run --name type-check $DOCKER_IMAGE make type-check-ci
+          docker cp type-check:/app/type-check-results.json ./type-check-results.json
+      - name: Upload type-check results
+        uses: kibalabs/github-action-create-annotations@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          json-file-path: ./type-check-results.json
+          check-name: type-check
+          fail-on-error: false
       # - name: Run security-check
       #   run: |
       #     docker run --name security-check $DOCKER_IMAGE make security-check-ci

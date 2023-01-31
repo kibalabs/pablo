@@ -1,3 +1,6 @@
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
 from typing import Optional
 
 from core.store.database import DatabaseConnection
@@ -11,13 +14,23 @@ from pablo.store.schema import ImagesTable
 from pablo.store.schema import ImageVariantsTable
 from pablo.store.schema import UrlUploadsTable
 
+if TYPE_CHECKING:
+    from sqlalchemy.sql._typing import _DMLColumnArgument
+else:
+    _DMLColumnArgument = Any
+
+_EMPTY_STRING = '_EMPTY_STRING'
+_EMPTY_OBJECT = '_EMPTY_OBJECT'
+
+CreateRecordDict = Dict[_DMLColumnArgument, Any]  # type: ignore[misc]
+UpdateRecordDict = Dict[_DMLColumnArgument, Any]  # type: ignore[misc]
 
 class Saver(CoreSaver):
 
     async def create_image(self, imageId: str, format: str, filename: str, previewFilename: Optional[str], width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> Image:  # pylint: disable=redefined-builtin
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
-        values = {
+        values: CreateRecordDict = {
             ImagesTable.c.imageId.key: imageId,
             ImagesTable.c.createdDate.key: createdDate,
             ImagesTable.c.updatedDate.key: updatedDate,
@@ -28,7 +41,7 @@ class Saver(CoreSaver):
             ImagesTable.c.height.key: height,
             ImagesTable.c.area.key: area,
         }
-        query = ImagesTable.insert().values(values)
+        query = ImagesTable.insert().values(values).returning(ImagesTable.c.imageId)
         await self._execute(query=query, connection=connection)
         return Image(
             imageId=imageId,
@@ -45,7 +58,7 @@ class Saver(CoreSaver):
     async def create_image_variant(self, imageId: str, filename: str, isPreview: bool, width: int, height: int, area: int, connection: Optional[DatabaseConnection] = None) -> ImageVariant:
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
-        values = {
+        values: CreateRecordDict = {
             ImageVariantsTable.c.createdDate.key: createdDate,
             ImageVariantsTable.c.updatedDate.key: updatedDate,
             ImageVariantsTable.c.imageId.key: imageId,
@@ -55,9 +68,9 @@ class Saver(CoreSaver):
             ImageVariantsTable.c.height.key: height,
             ImageVariantsTable.c.area.key: area,
         }
-        query = ImageVariantsTable.insert().values(values)
+        query = ImageVariantsTable.insert().values(values).returning(ImageVariantsTable.c.imageVariantId)
         result = await self._execute(query=query, connection=connection)
-        imageVariantId = result.inserted_primary_key[0]
+        imageVariantId = str(result.scalar_one())
         return ImageVariant(
             imageVariantId=imageVariantId,
             createdDate=createdDate,
@@ -73,15 +86,15 @@ class Saver(CoreSaver):
     async def create_url_upload(self, url: str, imageId: str, connection: Optional[DatabaseConnection] = None) -> UrlUpload:
         createdDate = date_util.datetime_from_now()
         updatedDate = createdDate
-        values = {
+        values: CreateRecordDict = {
             UrlUploadsTable.c.createdDate.key: createdDate,
             UrlUploadsTable.c.updatedDate.key: updatedDate,
             UrlUploadsTable.c.url.key: url,
             UrlUploadsTable.c.imageId.key: imageId,
         }
-        query = UrlUploadsTable.insert().values(values)
+        query = UrlUploadsTable.insert().values(values).returning(UrlUploadsTable.c.urlUploadId)
         result = await self._execute(query=query, connection=connection)
-        urlUploadId = result.inserted_primary_key[0]
+        urlUploadId = str(result.scalar_one())
         return UrlUpload(
             urlUploadId=urlUploadId,
             createdDate=createdDate,

@@ -41,3 +41,9 @@ class UploadImageUrlRequest(BaseModel):
 
 class UploadImageUrlResponse(BaseModel):
     image: ApiImage
+
+class GetGoToImageRequest(BaseModel):
+    pass
+
+class GetGoToImageResponse(BaseModel):
+    pass

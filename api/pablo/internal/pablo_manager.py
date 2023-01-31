@@ -20,8 +20,9 @@ from core.store.retriever import Direction
 from core.store.retriever import IntegerFieldFilter
 from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
+from core.queues.model import Message
 from core.util import file_util
-from PIL import Image as PILImage
+from PIL import Image as PILImage  # type: ignore
 from PIL import ImageSequence as PILImageSequence
 from starlette.responses import Response
 
@@ -42,7 +43,7 @@ _TARGET_SIZES = [50, 100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
 
 class PabloManager:
 
-    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: MessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
+    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: MessageQueue[Message], s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
@@ -136,7 +137,7 @@ class PabloManager:
             image = None
         if image:
             logging.info(f'Skipping saving image that already exists: {imageId}')
-            return
+            return image
         imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         if not imageFormat:
             imageFormat = magic.from_buffer(imageContent)
@@ -163,7 +164,7 @@ class PabloManager:
         await self.workQueue.send_message(message=ResizeImageMessageContent(imageId=imageId).to_message())
 
     @staticmethod
-    def _resize_image_content(imageContent: bytes, imageFormat: ImageFormat, isPreview: bool, width: int, height: int) -> Image:
+    def _resize_image_content(imageContent: bytes, imageFormat: str, isPreview: bool, width: int, height: int) -> bytes:
         if imageFormat not in IMAGE_FORMAT_PIL_TYPE_MAP:
             raise BadRequestException(message=f'Cannot process image with format {imageFormat}')
         content = io.BytesIO()
@@ -191,7 +192,7 @@ class PabloManager:
         extension = IMAGE_FORMAT_EXTENSION_MAP[image.format]
         imageVariants = await self.list_image_variants(imageId=imageId)
         existingSizes = {(imageVariant.isPreview, imageVariant.width, imageVariant.height) for imageVariant in imageVariants}
-        targetSizes: Set[Tuple[int, int]] = set()
+        targetSizes: Set[Tuple[bool, int, int]] = set()
         for targetSize in _TARGET_SIZES:
             if image.format in ANIMATED_IMAGE_FORMATS:
                 if image.width >= targetSize:
