@@ -11,7 +11,7 @@ from core import logging
 from core.exceptions import BadRequestException
 from core.exceptions import NotFoundException
 from core.exceptions import PermanentRedirectException
-from core.queues.sqs import SqsMessageQueue
+from core.queues.message_queue import MessageQueue
 from core.requester import Requester
 from core.requester import ResponseException
 from core.s3_manager import S3Manager
@@ -20,6 +20,7 @@ from core.store.retriever import Direction
 from core.store.retriever import IntegerFieldFilter
 from core.store.retriever import Order
 from core.store.retriever import StringFieldFilter
+from core.queues.model import Message
 from core.util import file_util
 from PIL import Image as PILImage  # type: ignore
 from PIL import ImageSequence as PILImageSequence
@@ -42,7 +43,7 @@ _TARGET_SIZES = [50, 100, 200, 300, 500, 640, 750, 1000, 1080, 1920, 2500]
 
 class PabloManager:
 
-    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: SqsMessageQueue, s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
+    def __init__(self, retriever: Retriever, saver: Saver, requester: Requester, ipfsRequesters: List[IpfsRequester], workQueue: MessageQueue[Message], s3Manager: S3Manager, bucketName: str, servingUrl: str) -> None:
         self.retriever = retriever
         self.saver = saver
         self.requester = requester
