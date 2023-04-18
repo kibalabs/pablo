@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 1.1.8"
+  required_version = "~> 1.3.7"
 
   backend "s3" {
     # aws s3 mb s3://kiba-infra-pablo-production

@@ -104,6 +104,13 @@ class PabloManager:
     #     presignedUpload = await self.s3Manager.generate_presigned_upload(target=f's3://{self.bucketName}/uploads/${{{filename}}}', timeLimit=60, sizeLimit=file_util.MEGABYTE * 10, accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
     #     return presignedUpload
 
+    async def upload_image_file(self, filePath: str) -> Image:
+        imageId = str(uuid.uuid4()).replace('-', '')
+        await self.s3Manager.upload_file(filePath=filePath, targetPath=f'{self.imagesS3Path}/{imageId}/original', accessControl='public-read', cacheControl=file_util.CACHE_CONTROL_FINAL_FILE)
+        image = await self.save_image(imageId=imageId, imageFormat=None)
+        print('image', image)
+        return image
+
     async def upload_image_url(self, url: str) -> Image:
         try:
             urlUpload = await self.retriever.get_url_upload_by_url(url=url)
@@ -140,9 +147,9 @@ class PabloManager:
             return image
         imageContent = await self.s3Manager.read_file(sourcePath=f'{self.imagesS3Path}/{imageId}/original')
         if not imageFormat:
-            imageFormat = magic.from_buffer(imageContent)
+            imageFormat = magic.from_buffer(imageContent, mime=True)
         if imageFormat not in IMAGE_FORMAT_EXTENSION_MAP:
-            raise BadRequestException(f'Unsupported image format')
+            raise BadRequestException(f'Unsupported image format: {imageFormat}')
         filename = f'original.{IMAGE_FORMAT_EXTENSION_MAP[imageFormat]}'
         width = 0
         height = 0

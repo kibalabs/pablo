@@ -1,3 +1,7 @@
+# NOTE(krishan711): pablo cors errors on tokenhunt seem to be happening because
+# the GET request gets cached and returned for the HEAD request. Not sure why
+# this happens or why its an error but looks like its the major issue.
+
 resource "aws_cloudfront_cache_policy" "s3" {
   name = "${local.project}-s3"
   default_ttl = 86400
