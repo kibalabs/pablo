@@ -66,11 +66,14 @@ app.add_middleware(CORSMiddleware, allow_credentials=True, allow_methods=['*'], 
     "http://localhost:3001",
     "http://localhost:3002",
     "https://pfpkit.xyz",
-    "https://milliondollartokenpage.com",
     "https://tokenhunt.io",
     "https://stormdrop.spriteclubnft.com",
+    "https://milliondollartokenpage.com",
     "https://gallery.milliondollartokenpage.com",
+    "https://rudeboys.io",
     "https://gallery.rudeboys.io",
+    "https://mint.rudeboys.io",
+    "https://admin.rudeboys.io",
 ], allow_origin_regex='https://.*\.tokenpage\.xyz')
 
 @app.on_event('startup')

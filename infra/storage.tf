@@ -35,19 +35,15 @@ resource "aws_s3_bucket_cors_configuration" "example" {
       "http://localhost:3001",
       "http://localhost:3002",
       "https://pfpkit.xyz",
-      "https://milliondollartokenpage.com",
       "https://tokenhunt.io",
       "https://stormdrop.spriteclubnft.com",
-      "https://gallery.milliondollartokenpage.com",
-      "https://gallery.rudeboys.io",
-      # "https://sprites-gallery.tokenpage.xyz",
-      # "https://pepes-gallery.tokenpage.xyz",
-      # "https://rudeboys.tokenpage.xyz",
-      # "https://rudeboys-mint.tokenpage.xyz",
-      # "https://rudeboys-admin.tokenpage.xyz",
+      "https://milliondollartokenpage.com",
+      "https://*.milliondollartokenpage.com",
+      "https://rudeboys.io",
+      "https://*.rudeboys.io",
       "https://*.tokenpage.xyz",
     ]
-    expose_headers = ["ETag", "Access-Control-Allow-Origin"]
+    expose_headers = ["ETag", "Access-Control-Allow-Origin", "Location"]
     max_age_seconds = 86400
   }
 }
