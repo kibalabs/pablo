@@ -9,7 +9,6 @@ from core.queues.message_queue_processor import MessageQueueProcessor
 from core.queues.sqs import SqsMessageQueue
 from core.requester import Requester
 from core.s3_manager import S3Manager
-from core.slack_client import SlackClient
 from core.store.database import Database
 from core.util.value_holder import RequestIdHolder
 
@@ -52,8 +51,7 @@ async def main():
     pabloManager = PabloManager(retriever=retriever, saver=saver, requester=requester, ipfsRequesters=ipfsRequesters, workQueue=workQueue, s3Manager=s3Manager, bucketName=os.environ['BUCKET_NAME'], servingUrl=servingUrl)
 
     processor = PabloMessageProcessor(pabloManager=pabloManager)
-    slackClient = SlackClient(webhookUrl=os.environ['SLACK_WEBHOOK_URL'], requester=requester, defaultSender='worker', defaultChannel='notd-notifications')
-    workQueueProcessor = MessageQueueProcessor(queue=workQueue, messageProcessor=processor, slackClient=slackClient, requestIdHolder=requestIdHolder)
+    workQueueProcessor = MessageQueueProcessor(queue=workQueue, messageProcessor=processor, slackClient=None, requestIdHolder=requestIdHolder)
 
     await database.connect()
     await s3Manager.connect()
